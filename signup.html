@@ -264,13 +264,27 @@
           if (submitBtn) submitBtn.textContent = "Processing Registration...";
 
           try {
+            if (!supabase || !supabase.auth) {
+              showNotification('Supabase client not loaded. Check console.', "error");
+              console.error('supabase client:', supabase);
+              if (submitBtn) submitBtn.textContent = "Create Account";
+              return;
+            }
+
             var result = await supabase.auth.signUp({
               email: uEmail,
               password: uPass,
               options: { data: { full_name: uName } }
             });
 
+            console.log('signUp result:', result);
             if (result.error) throw result.error;
+
+            if (!result.data || !result.data.user) {
+              showNotification('Account created! Please check your email to confirm.', "success");
+              if (submitBtn) submitBtn.textContent = "Create Account";
+              return;
+            }
 
             var user = result.data.user;
             localStorage.setItem('rr_runner_name', uName);
@@ -280,8 +294,13 @@
             showNotification("Account created! Redirecting...", "success");
             setTimeout(function() { window.location.href = 'index.html'; }, 1000);
           } catch (err) {
-            showNotification(err.message || JSON.stringify(err) || 'Signup failed. Check console for details.', "error");
-            console.error('Signup error:', err);
+            console.error('Full signup error:', err, 'type:', typeof err, 'keys:', Object.keys(err));
+            showNotification(
+              err && typeof err === 'object'
+                ? (err.message || err.msg || err.error_description || err.error || JSON.stringify(err))
+                : String(err),
+              "error"
+            );
             if (submitBtn) submitBtn.textContent = "Create Account";
           }
         });
