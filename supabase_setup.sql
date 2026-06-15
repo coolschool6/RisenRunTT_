@@ -217,3 +217,8 @@ CREATE POLICY "Admins read all screenshots" ON storage.objects
     bucket_id = 'screenshots' AND
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
   );
+
+-- ============================================================
+-- FINAL: Refresh PostgREST schema cache
+-- ============================================================
+NOTIFY pgrst, 'reload schema';
