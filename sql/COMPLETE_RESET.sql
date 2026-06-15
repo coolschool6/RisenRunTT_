@@ -4,17 +4,11 @@
 -- auth.users so you can create the admin user via Dashboard.
 -- ============================================================
 
--- ─── Wipe existing user tables AND auth users ──────────────
+-- ─── Wipe existing user tables (auth.users is NOT touched) ─
 DROP TABLE IF EXISTS public.registrations CASCADE;
 DROP TABLE IF EXISTS public.events CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
 DROP FUNCTION IF EXISTS public.handle_new_user CASCADE;
-
--- Delete ALL existing auth users and their sessions (so you start clean)
-DELETE FROM auth.identities;
-DELETE FROM auth.sessions;
-DELETE FROM auth.refresh_tokens;
-DELETE FROM auth.users;
 
 -- ─── PROFILES TABLE ─────────────────────────────────────────
 CREATE TABLE public.profiles (
