@@ -99,6 +99,12 @@ CREATE POLICY "Admin all registrations" ON public.registrations FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
+-- RPC: bypass RLS to get current user's role (used by main.js)
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS text LANGUAGE sql SECURITY DEFINER STABLE AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$;
+
 -- INDEXES
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
 CREATE INDEX IF NOT EXISTS idx_events_start_date ON public.events(start_date);

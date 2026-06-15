@@ -131,36 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Immediate: check localStorage
   applyRoleFromStorage();
 
-  // Delayed: server-verified check (keeps admin UI even if query fails)
   async function checkAdminStatus() {
     try {
       const { data: { user } } = await window.supabase.auth.getUser();
       if (!user) { console.log('[admin] no user'); window.adminResolve(); return; }
-      const { data: profile } = await window.supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-      console.log('[admin] server profile:', profile);
-      if (profile?.role === 'admin') {
-        showAdminUI();
-      } else if (profile === null) {
-        // RLS blocked the query — retry once after 1s
-        setTimeout(async () => {
-          const { data: p2 } = await window.supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .maybeSingle();
-          console.log('[admin] retry profile:', p2);
-          if (p2?.role === 'admin') showAdminUI();
-          window.adminResolve();
-        }, 1000);
-        return;
-      }
-    } catch (e) {
-      console.log('[admin] error:', e);
-    }
+      // Use RPC to bypass RLS — SECURITY DEFINER runs as table owner
+      const { data: role, error: rpcErr } = await window.supabase.rpc('get_my_role');
+      console.log('[admin] rpc result:', role, rpcErr);
+      if (role === 'admin') { showAdminUI(); }
+    } catch (e) { console.log('[admin] error:', e); }
     window.adminResolve();
     document.dispatchEvent(new CustomEvent('admin-status-resolved', { detail: { role: window.currentUserRole } }));
   }
