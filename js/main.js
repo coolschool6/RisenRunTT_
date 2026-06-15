@@ -108,41 +108,58 @@ document.addEventListener('DOMContentLoaded', () => {
     carouselNext.addEventListener('click', () => carouselTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' }));
   }
 
-  // ─── Admin status (localStorage fast-path + server verify) ───
+  // ─── Admin status ───
   function showAdminUI() {
+    if (window.currentUserRole === 'admin') return;
     window.currentUserRole = 'admin';
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-    document.getElementById('navLogin') && (document.getElementById('navLogin').style.display = 'none');
-    document.getElementById('navSignup') && (document.getElementById('navSignup').style.display = 'none');
   }
   function hideAdminUI() {
     window.currentUserRole = 'user';
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   }
 
-  // Fast path: use role from localStorage (set during login)
-  try {
-    var _stored = JSON.parse(localStorage.getItem('rr_user') || '{}');
-    if (_stored.role === 'admin') showAdminUI();
-  } catch (_) {}
+  function applyRoleFromStorage() {
+    try {
+      var u = JSON.parse(localStorage.getItem('rr_user') || '{}');
+      console.log('[admin] rr_user from localStorage:', u);
+      if (u.role === 'admin') { showAdminUI(); return true; }
+    } catch (_) {}
+    return false;
+  }
 
-  // Server verify (may override localStorage if role changed)
+  // Immediate: check localStorage
+  applyRoleFromStorage();
+
+  // Delayed: server-verified check (keeps admin UI even if query fails)
   async function checkAdminStatus() {
     try {
       const { data: { user } } = await window.supabase.auth.getUser();
-      if (!user) { window.adminResolve(); return; }
+      if (!user) { console.log('[admin] no user'); window.adminResolve(); return; }
       const { data: profile } = await window.supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .maybeSingle();
+      console.log('[admin] server profile:', profile);
       if (profile?.role === 'admin') {
         showAdminUI();
-      } else {
-        hideAdminUI();
+      } else if (profile === null) {
+        // RLS blocked the query — retry once after 1s
+        setTimeout(async () => {
+          const { data: p2 } = await window.supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+          console.log('[admin] retry profile:', p2);
+          if (p2?.role === 'admin') showAdminUI();
+          window.adminResolve();
+        }, 1000);
+        return;
       }
-    } catch (_) {
-      // Server query failed — keep the localStorage-based state
+    } catch (e) {
+      console.log('[admin] error:', e);
     }
     window.adminResolve();
     document.dispatchEvent(new CustomEvent('admin-status-resolved', { detail: { role: window.currentUserRole } }));
