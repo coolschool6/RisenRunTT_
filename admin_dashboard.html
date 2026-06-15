@@ -206,8 +206,8 @@
       if (!userData || !userData.id) { window.location.href = 'events.html'; return; }
       var { data: { user }, error: userErr } = await window.supabase.auth.getUser();
       if (userErr || !user) { window.location.href = 'events.html'; return; }
-      var { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-      if (profile?.role !== 'admin') { window.location.href = 'events.html'; return; }
+      var { data: role } = await supabase.rpc('get_my_role');
+      if (role !== 'admin') { window.location.href = 'events.html'; return; }
       document.querySelectorAll('.admin-only').forEach(function (el) { el.style.display = 'block'; });
       document.getElementById('navLogin').style.display = 'none';
       document.getElementById('navSignup').style.display = 'none';
