@@ -108,25 +108,42 @@ document.addEventListener('DOMContentLoaded', () => {
     carouselNext.addEventListener('click', () => carouselTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' }));
   }
 
-  // ─── Server-verified admin status ───
+  // ─── Admin status (localStorage fast-path + server verify) ───
+  function showAdminUI() {
+    window.currentUserRole = 'admin';
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+    document.getElementById('navLogin') && (document.getElementById('navLogin').style.display = 'none');
+    document.getElementById('navSignup') && (document.getElementById('navSignup').style.display = 'none');
+  }
+  function hideAdminUI() {
+    window.currentUserRole = 'user';
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+  }
+
+  // Fast path: use role from localStorage (set during login)
+  try {
+    var _stored = JSON.parse(localStorage.getItem('rr_user') || '{}');
+    if (_stored.role === 'admin') showAdminUI();
+  } catch (_) {}
+
+  // Server verify (may override localStorage if role changed)
   async function checkAdminStatus() {
     try {
       const { data: { user } } = await window.supabase.auth.getUser();
       if (!user) { window.adminResolve(); return; }
-
       const { data: profile } = await window.supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .maybeSingle();
-
       if (profile?.role === 'admin') {
-        window.currentUserRole = 'admin';
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        showAdminUI();
       } else {
-        window.currentUserRole = 'user';
+        hideAdminUI();
       }
-    } catch (_) { window.currentUserRole = 'user'; }
+    } catch (_) {
+      // Server query failed — keep the localStorage-based state
+    }
     window.adminResolve();
     document.dispatchEvent(new CustomEvent('admin-status-resolved', { detail: { role: window.currentUserRole } }));
   }
