@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event – Rise & Run TT</title>
+  <meta name="description" content="Event details">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .detail-hero {
+      position: relative; min-height: 360px; display: flex; align-items: flex-end;
+      padding: 40px 0; color: var(--white); overflow: hidden;
+    }
+    .detail-hero-bg {
+      position: absolute; inset: 0; background-size: cover; background-position: center;
+      filter: brightness(0.4); z-index: 0;
+    }
+    .detail-hero .container { position: relative; z-index: 1; }
+    .detail-hero h1 { font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; line-height: 1.2; }
+    .detail-hero .detail-meta { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem; opacity: 0.9; }
+    .detail-hero .detail-meta i { margin-right: 6px; color: var(--accent); }
+
+    .detail-section { padding: 40px 0 60px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
+    .detail-main h2 { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--light-gray); }
+    .detail-main .description { font-size: 0.95rem; color: var(--gray); line-height: 1.7; white-space: pre-wrap; }
+
+    .detail-sidebar .sidebar-card {
+      background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; margin-bottom: 20px;
+    }
+    .detail-sidebar .sidebar-card h3 { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .detail-sidebar .sidebar-card .info-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; color: var(--gray); }
+    .detail-sidebar .sidebar-card .info-row .label { font-weight: 600; color: var(--primary); }
+    .detail-sidebar .sidebar-card .price-display { font-size: 1.5rem; font-weight: 900; color: var(--accent-red); }
+    .detail-sidebar .sidebar-card .price-display.free { color: green; }
+    .btn-register-detail {
+      display: block; width: 100%; padding: 14px; border: none; border-radius: var(--radius-full);
+      background: var(--accent-red); color: var(--white); font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: var(--transition); text-align: center; text-decoration: none;
+    }
+    .btn-register-detail:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(204,0,0,0.35); }
+    .detail-sidebar .tag-list { display: flex; gap: 6px; flex-wrap: wrap; }
+    .detail-sidebar .tag-list .tag {
+      padding: 3px 10px; border-radius: var(--radius-full); background: var(--light-gray);
+      font-size: 0.75rem; font-weight: 600; color: var(--gray);
+    }
+    .detail-sidebar .org-info { font-size: 0.85rem; color: var(--gray); line-height: 1.6; }
+
+    .loading-spinner { text-align: center; padding: 80px 20px; color: var(--gray); }
+    .loading-spinner i { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.4; }
+
+    @media (max-width: 768px) {
+      .detail-hero h1 { font-size: 1.5rem; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-hero .detail-meta { flex-direction: column; gap: 8px; }
+    }
+
+    /* Registration modal styles (copied from events.html) */
+    .registration-modal {
+      position: fixed; inset: 0; z-index: 9999;
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .registration-modal.open { display: flex; }
+    .modal-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    }
+    .modal-content {
+      position: relative; background: var(--white);
+      border-radius: 16px; max-width: 700px; width: 100%;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 28px 16px; border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+    .modal-close {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: var(--light-gray); cursor: pointer; font-size: 1.1rem; color: var(--gray);
+    }
+    .modal-close:hover { background: var(--accent-red); color: var(--white); }
+    .modal-body { padding: 24px 28px; }
+    .modal-body h3 { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+    .modal-body .step-sub { font-size: 0.85rem; color: var(--gray); margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.8rem; font-weight: 600; color: var(--primary); }
+    .form-group label .required { color: var(--accent-red); }
+    .form-group input {
+      padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.9rem; color: var(--black); outline: none; font-family: inherit;
+    }
+    .form-group input:focus { border-color: var(--accent-red); }
+    .form-group .error-msg { font-size: 0.75rem; color: var(--accent-red); display: none; }
+    .form-group.invalid input { border-color: var(--accent-red); }
+    .form-group.invalid .error-msg { display: block; }
+    .cart-totals { background: var(--light-gray); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; color: var(--gray); }
+    .totals-row.total { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; font-weight: 800; color: var(--primary); font-size: 1rem; }
+    .totals-row.total span:last-child { color: var(--accent-red); }
+    .cart-qty { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .cart-qty label { font-size: 0.85rem; font-weight: 600; color: var(--primary); }
+    .qty-btn {
+      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--white); cursor: pointer; font-size: 0.9rem; color: var(--primary);
+    }
+    .qty-btn:hover { border-color: var(--accent-red); color: var(--accent-red); }
+    .qty-value { font-size: 0.9rem; font-weight: 700; color: var(--primary); min-width: 24px; text-align: center; }
+    .order-pay-btn {
+      display: block; width: 100%; padding: 16px; background: var(--accent-red);
+      color: var(--white); border: none; border-radius: var(--radius-full);
+      font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 18px;
+    }
+    .order-pay-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(204,0,0,0.35); }
+    .order-pay-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">RR</div>
+        Rise & Run TT
+      </a>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <nav class="nav" id="mainNav">
+        <a href="index.html">Home</a>
+        <a href="events.html" class="active">Events & Results</a>
+        <a href="login.html" id="navLogin">Login</a>
+        <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
+        <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
+        <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="eventDetailContainer">
+    <div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i><p>Loading event...</p></div>
+  </div>
+
+  <!-- Registration Modal -->
+  <div class="registration-modal" id="registrationModal">
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-pen" style="color:var(--accent-red);margin-right:8px;"></i> <span id="modalEventTitle">Event</span> Registration</h2>
+        <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <h3>Registration</h3>
+        <p class="step-sub" id="modalEventSub">Register for this event</p>
+        <div class="cart-qty">
+          <label>Quantity:</label>
+          <button class="qty-btn qty-minus">&minus;</button>
+          <span class="qty-value" id="cartQty">1</span>
+          <button class="qty-btn qty-plus">+</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>First name <span class="required">*</span></label>
+            <input type="text" id="billFirstName" required>
+            <span class="error-msg">First name required</span>
+          </div>
+          <div class="form-group">
+            <label>Last name <span class="required">*</span></label>
+            <input type="text" id="billLastName" required>
+            <span class="error-msg">Last name required</span>
+          </div>
+          <div class="form-group">
+            <label>Phone <span class="required">*</span></label>
+            <input type="tel" id="billPhone" placeholder="18684825531" required>
+            <span class="error-msg">Phone required</span>
+          </div>
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input type="email" id="billEmail" required>
+            <span class="error-msg">Valid email required</span>
+          </div>
+          <div class="form-group">
+            <label>Attendee First Name <span class="required">*</span></label>
+            <input type="text" id="attFirstName" required>
+            <span class="error-msg">Attendee first name required</span>
+          </div>
+          <div class="form-group">
+            <label>Attendee Last Name <span class="required">*</span></label>
+            <input type="text" id="attLastName" required>
+            <span class="error-msg">Attendee last name required</span>
+          </div>
+          <div class="form-group">
+            <label>Attendee Phone</label>
+            <input type="tel" id="attPhone">
+          </div>
+          <div class="form-group">
+            <label>Location / City</label>
+            <input type="text" id="attLocation">
+          </div>
+        </div>
+        <div class="card-section" style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
+          <h3 style="font-size:0.95rem;font-weight:700;color:var(--primary);margin-bottom:10px;">Card Payment</h3>
+          <div class="form-grid">
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>Cardholder Name <span class="required">*</span></label>
+              <input type="text" id="cardName" placeholder="John Doe" required>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>Card Number <span class="required">*</span></label>
+              <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+            </div>
+            <div class="form-group">
+              <label>Expiry Date <span class="required">*</span></label>
+              <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" required>
+            </div>
+            <div class="form-group">
+              <label>CVV <span class="required">*</span></label>
+              <input type="text" id="cardCvv" placeholder="123" maxlength="4" required>
+            </div>
+          </div>
+        </div>
+        <div class="cart-totals">
+          <div class="totals-row"><span>Subtotal</span><span id="totalsSubtotal">TTD0.00</span></div>
+          <div class="totals-row"><span>Processing Fee</span><span id="totalsFee">TTD0.00</span></div>
+          <div class="totals-row total"><span>Total</span><span id="totalsTotal">TTD0.00</span></div>
+        </div>
+        <button class="order-pay-btn" id="orderPayBtn"><i class="fas fa-lock"></i> Pay with Card</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand"><h3>Rise & Run TT</h3></div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events & Results</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">How It Works</a></li>
+            <li><a href="#">Terms & Conditions</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    (async function () {
+      const params = new URLSearchParams(window.location.search);
+      const eventId = params.get('id');
+      if (!eventId) { document.getElementById('eventDetailContainer').innerHTML = '<div class="loading-spinner"><p>No event specified. <a href="events.html" style="color:var(--accent-red);font-weight:600;">Browse events</a></p></div>'; return; }
+
+      var { data: ev, error } = await window.supabase.from('events').select('*').eq('id', eventId).maybeSingle();
+      if (error || !ev) { document.getElementById('eventDetailContainer').innerHTML = '<div class="loading-spinner"><p>Event not found. <a href="events.html" style="color:var(--accent-red);font-weight:600;">Browse events</a></p></div>'; return; }
+
+      document.title = ev.title + ' – Rise & Run TT';
+
+      var banner = ev.banner_url || 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1200&h=600&fit=crop';
+      var dateStr = ev.start_date || 'TBD';
+      if (ev.start_time) dateStr += ' at ' + ev.start_time;
+      var priceDisplay = (ev.price && parseFloat(ev.price) > 0) ? 'TTD' + ev.price : '<span style="color:green;">Free</span>';
+
+      document.getElementById('eventDetailContainer').innerHTML =
+        '<section class="detail-hero" style="background:linear-gradient(135deg,#1a0000,#4a0000,#8b0000);">' +
+          '<div class="detail-hero-bg" style="background-image:url(\'' + banner + '\');"></div>' +
+          '<div class="container">' +
+            '<h1>' + (ev.title || 'Untitled Event') + '</h1>' +
+            '<div class="detail-meta">' +
+              '<span><i class="fas fa-calendar-alt"></i> ' + dateStr + '</span>' +
+              (ev.location ? '<span><i class="fas fa-map-marker-alt"></i> ' + ev.location + '</span>' : '') +
+              (ev.country ? '<span><i class="fas fa-globe"></i> ' + ev.country + '</span>' : '') +
+              (ev.category ? '<span><i class="fas fa-tag"></i> ' + ev.category + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+        '<section class="detail-section">' +
+          '<div class="container">' +
+            '<div class="detail-grid">' +
+              '<div class="detail-main">' +
+                '<h2>About This Event</h2>' +
+                '<div class="description">' + (ev.description || 'No description available.') + '</div>' +
+                (ev.video_url ? '<h2 style="margin-top:32px;">Event Video</h2><div class="video-wrap"><a href="' + ev.video_url + '" target="_blank" rel="noopener" style="color:var(--accent-red);font-weight:600;"><i class="fas fa-video"></i> Watch Event Video</a></div>' : '') +
+              '</div>' +
+              '<div class="detail-sidebar">' +
+                '<div class="sidebar-card">' +
+                  '<div class="price-display' + ((!ev.price || parseFloat(ev.price) <= 0) ? ' free' : '') + '">' + priceDisplay + '</div>' +
+                  '<div style="margin-top:16px;"><button class="btn-register-detail" id="detailRegisterBtn"><i class="fas fa-running"></i> Register Now</button></div>' +
+                '</div>' +
+                '<div class="sidebar-card">' +
+                  '<h3>Event Details</h3>' +
+                  '<div class="info-row"><span class="label">Date</span><span>' + (ev.start_date || 'TBD') + '</span></div>' +
+                  (ev.start_time ? '<div class="info-row"><span class="label">Time</span><span>' + ev.start_time + '</span></div>' : '') +
+                  (ev.end_date ? '<div class="info-row"><span class="label">End Date</span><span>' + ev.end_date + '</span></div>' : '') +
+                  (ev.end_time ? '<div class="info-row"><span class="label">End Time</span><span>' + ev.end_time + '</span></div>' : '') +
+                  (ev.location ? '<div class="info-row"><span class="label">Location</span><span>' + ev.location + '</span></div>' : '') +
+                  (ev.country ? '<div class="info-row"><span class="label">Country</span><span>' + ev.country + '</span></div>' : '') +
+                  (ev.category ? '<div class="info-row"><span class="label">Category</span><span>' + ev.category + '</span></div>' : '') +
+                  (ev.event_type ? '<div class="info-row"><span class="label">Type</span><span>' + ev.event_type + '</span></div>' : '') +
+                  (ev.recurrence ? '<div class="info-row"><span class="label">Recurrence</span><span>' + ev.recurrence + '</span></div>' : '') +
+                  (ev.enable_certification ? '<div class="info-row"><span class="label">Certification</span><span>Available</span></div>' : '') +
+                '</div>' +
+                (ev.tags && ev.tags.length > 0 ? '<div class="sidebar-card"><h3>Tags</h3><div class="tag-list">' + ev.tags.map(function(t) { return '<span class="tag">' + t + '</span>'; }).join('') + '</div></div>' : '') +
+                '<div class="sidebar-card">' +
+                  '<h3>Organizer</h3>' +
+                  '<div class="org-info">' +
+                    '<p><strong>' + (ev.organizer_name || 'Rise & Run TT') + '</strong></p>' +
+                    (ev.registration_email_url ? '<p style="margin-top:8px;"><i class="fas fa-envelope" style="color:var(--accent-red);margin-right:6px;"></i> <a href="mailto:' + ev.registration_email_url + '" style="color:var(--gray);">' + ev.registration_email_url + '</a></p>' : '') +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</section>';
+
+      // Hook up Register button
+      document.getElementById('detailRegisterBtn').addEventListener('click', function () {
+        if (typeof window.openRegistrationModal === 'function') {
+          window.openRegistrationModal(ev.title, ev.id);
+        } else {
+          alert('Registration system is loading. Please try again.');
+        }
+      });
+
+      // ─── Registration Modal Logic ───
+      var _cartQty = 1;
+      var _unitPrice = parseFloat(ev.price) || 0;
+      var _processingFee = _unitPrice > 0 ? parseFloat((_unitPrice * 0.07).toFixed(2)) : 0;
+      var selectedEventId = ev.id;
+
+      function updateCartDisplay() {
+        var subtotal = (_unitPrice * _cartQty).toFixed(2);
+        var total = (_unitPrice * _cartQty + _processingFee).toFixed(2);
+        document.getElementById('cartQty').textContent = _cartQty;
+        document.getElementById('totalsSubtotal').textContent = 'TTD' + subtotal;
+        document.getElementById('totalsFee').textContent = 'TTD' + _processingFee.toFixed(2);
+        document.getElementById('totalsTotal').textContent = 'TTD' + total;
+      }
+
+      function closeModal() {
+        document.getElementById('registrationModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      window.openRegistrationModal = function (name, id) {
+        selectedEventId = id;
+        document.getElementById('modalEventTitle').textContent = name || 'Event';
+        document.getElementById('modalEventSub').textContent = 'Register for ' + (name || 'this event');
+        _cartQty = 1;
+        updateCartDisplay();
+        document.getElementById('registrationModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+      };
+
+      var modal = document.getElementById('registrationModal');
+      document.getElementById('modalClose').addEventListener('click', closeModal);
+      document.getElementById('modalOverlay').addEventListener('click', closeModal);
+
+      document.querySelector('.qty-minus').addEventListener('click', function () {
+        if (_cartQty > 1) { _cartQty--; updateCartDisplay(); }
+      });
+      document.querySelector('.qty-plus').addEventListener('click', function () {
+        _cartQty++; updateCartDisplay();
+      });
+
+      document.getElementById('orderPayBtn').addEventListener('click', async function () {
+        var userData = localStorage.getItem('rr_user');
+        if (!userData) { alert('You must be logged in to register.'); return; }
+        var user = JSON.parse(userData);
+        if (!selectedEventId) { alert('Event ID missing.'); return; }
+
+        this.disabled = true;
+        this.textContent = 'Submitting...';
+
+        var regData = {
+          user_id: user.id,
+          event_id: selectedEventId,
+          status: 'Registered',
+          quantity: _cartQty,
+          billing_first_name: document.getElementById('billFirstName').value.trim(),
+          billing_last_name: document.getElementById('billLastName').value.trim(),
+          billing_phone: document.getElementById('billPhone').value.trim(),
+          billing_email: document.getElementById('billEmail').value.trim(),
+          attendee_first_name: document.getElementById('attFirstName').value.trim(),
+          attendee_last_name: document.getElementById('attLastName').value.trim(),
+          attendee_phone: document.getElementById('attPhone').value.trim(),
+          attendee_location: document.getElementById('attLocation').value.trim()
+        };
+
+        var { error } = await window.supabase.from('registrations').insert(regData);
+        this.disabled = false;
+        this.textContent = 'Complete Registration';
+
+        if (error) { alert('Registration failed: ' + error.message); return; }
+        alert('Registration Submitted! Total: TTD' + (_unitPrice * _cartQty + _processingFee).toFixed(2));
+        closeModal();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+      });
+
+      // Card field formatting
+      document.getElementById('cardNumber').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+      });
+      document.getElementById('cardExpiry').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').replace(/^(\d{2})(\d)/, '$1/$2').slice(0, 5);
+      });
+      document.getElementById('cardCvv').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 4);
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Event – Rise & Run TT</title>
+  <meta name="description" content="Admin event creation page.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: var(--light-gray); }
+    .create-section { padding: 40px 0 60px; }
+    .create-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 32px; max-width: 720px; margin: 0 auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .create-card h2 {
+      font-size: 1.25rem; font-weight: 800; color: var(--primary);
+      margin-bottom: 24px; padding-bottom: 12px;
+      border-bottom: 2px solid var(--light-gray);
+    }
+    .create-card h2 .sub {
+      font-size: 0.8rem; font-weight: 400; color: var(--gray);
+      display: block; margin-top: 2px;
+    }
+    .create-card .field { margin-bottom: 18px; }
+    .create-card .field label {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: var(--primary); margin-bottom: 4px;
+    }
+    .create-card .field label .req { color: var(--accent-red); }
+    .create-card .field label .hint {
+      font-weight: 400; font-size: 0.75rem; color: var(--gray);
+      margin-left: 4px;
+    }
+    .create-card .field input,
+    .create-card .field select,
+    .create-card .field textarea {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 0.9rem; color: var(--black);
+      background: var(--white); outline: none; font-family: inherit;
+      transition: var(--transition); box-sizing: border-box;
+    }
+    .create-card .field input:focus,
+    .create-card .field select:focus,
+    .create-card .field textarea:focus {
+      border-color: var(--accent-red); box-shadow: 0 0 0 3px rgba(204,0,0,0.08);
+    }
+    .create-card .field textarea { min-height: 100px; resize: vertical; }
+    .create-card .field .file-wrap {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .create-card .field .file-wrap .file-btn {
+      padding: 8px 18px; border: 1.5px solid var(--border);
+      border-radius: 6px; background: var(--white); font-size: 0.85rem;
+      font-weight: 600; color: var(--gray); cursor: pointer;
+      transition: var(--transition);
+    }
+    .create-card .field .file-wrap .file-btn:hover { border-color: var(--accent-red); color: var(--accent-red); }
+    .create-card .field .file-wrap .file-name { font-size: 0.82rem; color: var(--gray); }
+    .create-card .field .file-wrap .file-size { font-size: 0.78rem; color: var(--gray); }
+    .create-card .field .file-wrap input[type=file] { display: none; }
+    .create-card .field .banner-preview {
+      margin-top: 10px; max-width: 100%; max-height: 200px;
+      border-radius: 8px; display: none; object-fit: cover;
+    }
+    .create-card .field .tag-note { font-size: 0.75rem; color: var(--gray); margin-top: 3px; }
+    .create-card .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .create-card .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .create-card .toggle-wrap input[type=checkbox] {
+      width: 20px; height: 20px; accent-color: var(--accent-red);
+      cursor: pointer;
+    }
+    .create-card .toggle-wrap label { cursor: pointer; font-size: 0.85rem; color: var(--gray); }
+    .create-card .organizer-note {
+      font-size: 0.8rem; color: var(--gray);
+      background: var(--light-gray); border-radius: 8px; padding: 12px 16px; margin-top: 4px;
+    }
+    .create-card .form-actions {
+      display: flex; gap: 12px; margin-top: 28px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .create-card .form-actions .btn-submit {
+      padding: 12px 36px; border: none; border-radius: var(--radius-full);
+      background: var(--accent-red); color: var(--white); font-weight: 700;
+      font-size: 0.95rem; cursor: pointer; transition: var(--transition);
+    }
+    .create-card .form-actions .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(204,0,0,0.3); }
+    .create-card .form-actions .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .create-card .form-actions .btn-cancel {
+      padding: 12px 24px; border: 2px solid var(--border);
+      border-radius: var(--radius-full); background: var(--white);
+      color: var(--gray); font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; transition: var(--transition); text-decoration: none;
+    }
+    .create-card .form-actions .btn-cancel:hover { border-color: var(--primary); color: var(--primary); }
+    .create-card .radio-group { display: flex; gap: 16px; margin-top: 4px; }
+    .create-card .radio-group label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.85rem; font-weight: 500; color: var(--gray); cursor: pointer;
+    }
+    .create-card .radio-group input[type=radio] { accent-color: var(--accent-red); width: 16px; height: 16px; }
+    @media (max-width: 640px) {
+      .create-card { padding: 20px; }
+      .create-card .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">RR</div>
+        Rise & Run TT
+      </a>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <nav class="nav" id="mainNav">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events & Results</a>
+        <a href="login.html" id="navLogin">Login</a>
+        <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
+        <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
+        <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="create-section">
+    <div class="container">
+      <div style="max-width:720px;margin:0 auto 16px;">
+        <h1 style="font-size:1.5rem;font-weight:900;color:var(--primary);">
+          <i class="fas fa-plus-circle" style="color:var(--accent-red);margin-right:8px;"></i>
+          Create Event
+        </h1>
+      </div>
+
+      <form class="create-card" id="createEventForm">
+
+        <h2>Event Details</h2>
+
+        <div class="field">
+          <label>Event Title <span class="req">*</span></label>
+          <input type="text" id="fTitle" placeholder="Event title">
+        </div>
+
+        <div class="field">
+          <label>Organizer Name <span class="req">*</span></label>
+          <input type="text" id="fOrganizer" placeholder="Organizer name">
+        </div>
+
+        <div class="field">
+          <label>Event Location <span class="req">*</span></label>
+          <input type="text" id="fLocation" placeholder="Location for google map">
+        </div>
+
+        <div class="field">
+          <label>Event Category <span class="req">*</span></label>
+          <select id="fCategory">
+            <option value="">Choose a Category</option>
+            <option value="Road Race">Road Race</option>
+            <option value="Virtual Race">Virtual Race</option>
+            <option value="Trail Race">Trail Race</option>
+            <option value="Challenge">Challenge</option>
+            <option value="Meeting">Meeting</option>
+            <option value="Networking">Networking</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Price (TTD) <span class="req">*</span></label>
+          <input type="number" id="fPrice" step="0.01" min="0" value="0.00" placeholder="e.g. 169.00">
+        </div>
+
+        <div class="field">
+          <label>Event tags (optional) <span class="hint">maximum of 2</span></label>
+          <input type="text" id="fTags" placeholder="e.g. Meeting or Networking Events, Drama">
+          <div class="tag-note">Comma separate tags, such as required like event type or content for this event. Maximum of 2.</div>
+        </div>
+
+        <div class="field">
+          <label>Event Country <span class="req">*</span></label>
+          <select id="fCountry">
+            <option value="">Select Country</option>
+            <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+            <option value="Barbados">Barbados</option>
+            <option value="Grenada">Grenada</option>
+            <option value="Jamaica">Jamaica</option>
+            <option value="Saint Lucia">Saint Lucia</option>
+            <option value="Saint Vincent and the Grenadines">Saint Vincent and the Grenadines</option>
+            <option value="United States">United States</option>
+            <option value="Canada">Canada</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Event Banner <span class="req">*</span></label>
+          <div class="file-wrap">
+            <span class="file-btn" id="bannerBtn">Choose File</span>
+            <span class="file-name" id="bannerFileName">No file chosen</span>
+            <span class="file-size">Maximum file size: 2 GB.</span>
+            <input type="file" id="fBanner" accept="image/*">
+          </div>
+          <img class="banner-preview" id="bannerPreview">
+        </div>
+
+        <div class="field">
+          <label>Description <span class="req">*</span></label>
+          <textarea id="fDescription" placeholder="Paragraph"></textarea>
+        </div>
+
+        <h2 style="margin-top:32px;">Registration & Timing</h2>
+
+        <div class="field">
+          <label>Registration email/URL <span class="req">*</span></label>
+          <input type="text" id="fRegEmail" value="Risenruntt@gmail.com">
+        </div>
+
+        <div class="field">
+          <label>Video URL (optional)</label>
+          <input type="url" id="fVideoUrl" placeholder="Please enter event video url">
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Start Date <span class="req">*</span></label>
+            <input type="date" id="fStartDate" required>
+          </div>
+          <div class="field">
+            <label>Start Time <span class="req">*</span></label>
+            <input type="time" id="fStartTime" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>End Date</label>
+            <input type="date" id="fEndDate">
+          </div>
+          <div class="field">
+            <label>End Time (optional)</label>
+            <input type="time" id="fEndTime">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Event Recurrence <span class="req">*</span></label>
+          <select id="fRecurrence">
+            <option value="">Don't Repeat</option>
+            <option value="Weekly">Weekly</option>
+            <option value="Monthly">Monthly</option>
+            <option value="Yearly">Yearly</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Participant Certification</label>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="fCert">
+            <label for="fCert">Enable certification</label>
+          </div>
+        </div>
+
+        <h2 style="margin-top:32px;">Organizer Details</h2>
+
+        <div class="field">
+          <label>Organizer (optional)</label>
+          <select id="fOrganizerSelect">
+            <option value="">Select Some Options</option>
+          </select>
+          <div class="organizer-note">If it doesn't show organizer(s). Manage your organizer(s) from here but it should also have a virtual option or in-person option.</div>
+        </div>
+
+        <div class="field">
+          <label>Event Type</label>
+          <div class="radio-group">
+            <label><input type="radio" name="eventType" value="virtual" checked> Virtual</label>
+            <label><input type="radio" name="eventType" value="in-person"> In-Person</label>
+            <label><input type="radio" name="eventType" value="both"> Both</label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-check-circle"></i> Create Event</button>
+          <a href="events.html" class="btn-cancel">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand"><h3>Rise & Run TT</h3></div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events & Results</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">How It Works</a></li>
+            <li><a href="#">Terms & Conditions</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    (async function () {
+      try {
+        var { data: { user }, error } = await window.supabase.auth.getUser();
+        if (error || !user) { window.location.href = 'events.html'; return; }
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+        if (profile?.role !== 'admin') { window.location.href = 'events.html'; return; }
+        document.querySelectorAll('.admin-only').forEach(function (el) { el.style.display = 'block'; });
+      } catch (_) { window.location.href = 'events.html'; }
+
+      document.getElementById('bannerBtn').addEventListener('click', function () {
+        document.getElementById('fBanner').click();
+      });
+
+      document.getElementById('fBanner').addEventListener('change', function () {
+        var file = this.files[0];
+        if (!file) return;
+        document.getElementById('bannerFileName').textContent = file.name;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var preview = document.getElementById('bannerPreview');
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('createEventForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        try {
+          var bannerFile = document.getElementById('fBanner').files[0];
+          var bannerUrl = '';
+          if (bannerFile) {
+            var filePath = 'event-banners/' + Date.now() + '_' + bannerFile.name;
+            var { error: upErr } = await window.supabase.storage.from('event-banners').upload(filePath, bannerFile, { upsert: true });
+            if (upErr) { alert('Banner upload failed: ' + upErr.message); btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Create Event'; return; }
+            var { data: pubData } = window.supabase.storage.from('event-banners').getPublicUrl(filePath);
+            bannerUrl = pubData.publicUrl;
+          }
+
+          var tags = document.getElementById('fTags').value.trim();
+          var tagsArr = tags ? tags.split(',').slice(0, 2).map(function (t) { return t.trim(); }) : [];
+
+          var formData = {
+            title: document.getElementById('fTitle').value.trim(),
+            organizer_name: document.getElementById('fOrganizer').value.trim(),
+            location: document.getElementById('fLocation').value.trim(),
+            category: document.getElementById('fCategory').value,
+            event_type: document.querySelector('input[name="eventType"]:checked').value,
+            price: parseFloat(document.getElementById('fPrice').value) || 0.00,
+            tags: tagsArr,
+            country: document.getElementById('fCountry').value,
+            banner_url: bannerUrl,
+            description: document.getElementById('fDescription').value.trim(),
+            registration_email_url: document.getElementById('fRegEmail').value.trim(),
+            video_url: document.getElementById('fVideoUrl').value.trim(),
+            start_date: document.getElementById('fStartDate').value,
+            start_time: document.getElementById('fStartTime').value,
+            end_date: document.getElementById('fEndDate').value || null,
+            end_time: document.getElementById('fEndTime').value || null,
+            recurrence: document.getElementById('fRecurrence').value,
+            enable_certification: document.getElementById('fCert').checked
+          };
+
+          var { error: insErr } = await window.supabase.from('events').insert([formData]);
+          if (insErr) { alert('Error: ' + insErr.message); btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Create Event'; return; }
+
+          alert('Event "' + formData.title + '" added to database successfully!');
+          window.location.href = 'events.html';
+        } catch (err) {
+          alert('Unexpected error: ' + err.message);
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-check-circle"></i> Create Event';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

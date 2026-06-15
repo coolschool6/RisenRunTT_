@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In – Rise & Run TT</title>
+  <meta name="description" content="Log in to your Rise & Run TT account to register for road races and virtual running events.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .auth-hero {
+      background: linear-gradient(135deg, #1a0000 0%, #4a0000 50%, #8b0000 100%);
+      padding: 60px 0 40px;
+      text-align: center;
+      color: var(--white);
+      border-radius: 0 0 40px 40px;
+    }
+    .auth-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+    }
+    .auth-hero h1 span { color: var(--accent); }
+    .auth-hero p { opacity: 0.85; margin-top: 8px; }
+
+    .auth-section { padding: 40px 0 60px; }
+    .auth-container {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .auth-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .auth-card .form-group { margin-bottom: 16px; }
+    .auth-card .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .auth-card .form-group label .required { color: var(--accent-red); }
+    .auth-card .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--black);
+      background: var(--white);
+      transition: var(--transition);
+      outline: none;
+      font-family: inherit;
+    }
+    .auth-card .form-group input:focus {
+      border-color: var(--accent-red);
+      box-shadow: 0 0 0 3px rgba(204,0,0,0.08);
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent-red), #990000);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-full);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 8px;
+    }
+    .auth-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(204,0,0,0.3);
+    }
+    .auth-footer-text {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-top: 20px;
+    }
+    .auth-footer-text a { color: var(--accent-red); font-weight: 600; }
+    .auth-footer-text a:hover { text-decoration: underline; }
+    .forgot-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0 16px;
+      font-size: 0.82rem;
+    }
+    .forgot-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--gray); }
+    .forgot-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent-red); }
+    .forgot-row a { color: var(--accent-red); }
+    .forgot-row a:hover { text-decoration: underline; }
+    @media (max-width: 480px) {
+      .auth-hero h1 { font-size: 1.6rem; }
+      .auth-card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">RR</div>
+        Rise & Run TT
+      </a>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <nav class="nav" id="mainNav">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="login.html" class="active btn-primary" id="navLogin">Login</a>
+        <a href="signup.html" id="navSignup">Sign Up</a>
+        <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="auth-hero">
+    <div class="container">
+      <h1>Welcome <span>Back</span>, Runner</h1>
+      <p>Log in to manage your race registrations and results.</p>
+    </div>
+  </section>
+
+  <section class="auth-section">
+    <div class="auth-container">
+      <form class="auth-card" id="loginForm">
+        <div class="form-group">
+          <label>Email Address <span class="required">*</span></label>
+          <input type="email" id="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+        <button class="auth-btn" id="loginBtn" type="submit"><i class="fas fa-sign-in-alt"></i> Log In</button>
+
+        <p class="auth-footer-text">Don't have an account? <a href="signup.html">Sign up</a></p>
+      </form>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <h3>Rise & Run TT</h3>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events & Results</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">How It Works</a></li>
+            <li><a href="#">Terms & Conditions</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    function showNotification(message, type) {
+      type = type || 'error';
+      var existing = document.getElementById('rrNotification');
+      if (existing) existing.remove();
+
+      var overlay = document.createElement('div');
+      overlay.className = 'notification-overlay';
+      overlay.id = 'rrNotification';
+      overlay.innerHTML =
+        '<div class="notification-box">' +
+          '<div class="notif-icon ' + type + '">' +
+            (type === 'success' ? '<i class="fas fa-check-circle"></i>' :
+             type === 'info'    ? '<i class="fas fa-info-circle"></i>' :
+                                  '<i class="fas fa-exclamation-circle"></i>') +
+          '</div>' +
+          '<div class="notif-title">' +
+            (type === 'success' ? 'Success' : type === 'info' ? 'Notice' : 'Error') +
+          '</div>' +
+          '<div class="notif-message">' + message + '</div>' +
+          '<button class="notif-close">OK</button>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+
+      requestAnimationFrame(function() { overlay.classList.add('active'); });
+
+      overlay.querySelector('.notif-close').addEventListener('click', function() {
+        overlay.classList.remove('active');
+        setTimeout(function() { overlay.remove(); }, 300);
+      });
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+          setTimeout(function() { overlay.remove(); }, 300);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const supabase = window.supabase;
+      var loginForm = document.querySelector('form') || document.getElementById('loginForm');
+
+      if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          var emailInput = document.querySelector('input[type="email"]');
+          var passwordInput = document.querySelector('input[type="password"]');
+          var submitBtn = loginForm.querySelector('button[type="submit"]');
+
+          if (!emailInput || !passwordInput) return;
+
+          var email = emailInput.value.trim();
+          var password = passwordInput.value.trim();
+
+          if (submitBtn) submitBtn.textContent = "Logging you in...";
+
+          try {
+            var result = await supabase.auth.signInWithPassword({ email: email, password: password });
+            if (result.error) throw result.error;
+
+            var user = result.data.user;
+            if (user) {
+              var { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+              var role = (profile && profile.role) || 'user';
+              var name = (profile && profile.full_name) || (user.user_metadata && user.user_metadata.full_name) || user.email || 'Athlete';
+              localStorage.setItem('rr_runner_name', name);
+              localStorage.setItem('rr_user', JSON.stringify({ id: user.id, name: name, email: user.email, role: role }));
+              if (result.data.session) localStorage.setItem('rr_token', result.data.session.access_token);
+            }
+
+            showNotification("Welcome back!", "success");
+            setTimeout(function() { window.location.href = 'index.html'; }, 800);
+          } catch (err) {
+            showNotification(err.message, "error");
+            if (submitBtn) submitBtn.textContent = "Log In";
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

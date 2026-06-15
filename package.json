@@ -1,0 +1,17 @@
+{
+  "name": "rise-and-run-tt",
+  "version": "1.0.0",
+  "description": "Rise & Run TT — Trinidad & Tobago road race platform",
+  "scripts": {
+    "start": "node serve.js",
+    "dev": "node serve.js"
+  },
+  "keywords": [
+    "running",
+    "races",
+    "trinidad",
+    "tobago"
+  ],
+  "license": "MIT",
+  "dependencies": {}
+}
