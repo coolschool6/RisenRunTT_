@@ -25,6 +25,10 @@ CREATE POLICY "Admin all profiles" ON public.profiles
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+-- Allow users to update their own profile (needed for Strava toggle, etc.)
+CREATE POLICY "Users update own profile" ON public.profiles
+  FOR UPDATE USING (auth.uid() = id);
+
 -- Auto-insert profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
@@ -162,6 +166,19 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 2. Promote yourself to admin (replace with your email):
 -- UPDATE public.profiles SET role = 'admin' WHERE email = 'your-email@example.com';
+
+-- ============================================================
+-- INDEXES (for performance)
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
+CREATE INDEX IF NOT EXISTS idx_events_start_date ON public.events(start_date);
+CREATE INDEX IF NOT EXISTS idx_registrations_user_id ON public.registrations(user_id);
+CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON public.registrations(event_id);
+CREATE INDEX IF NOT EXISTS idx_registrations_proof_status ON public.registrations(proof_status);
+
+-- ============================================================
+-- POST-SETUP INSTRUCTIONS
+-- ============================================================
 
 -- 3. Verify admin status:
 -- SELECT p.id, p.email, p.role, p.created_at FROM public.profiles p WHERE p.role = 'admin';

@@ -432,18 +432,22 @@
             <div class="form-group" style="grid-column:1/-1;">
               <label>Cardholder Name <span class="required">*</span></label>
               <input type="text" id="cardName" placeholder="John Doe" required>
+              <span class="error-msg">Cardholder name required</span>
             </div>
             <div class="form-group" style="grid-column:1/-1;">
               <label>Card Number <span class="required">*</span></label>
               <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+              <span class="error-msg">Card number required</span>
             </div>
             <div class="form-group">
               <label>Expiry Date <span class="required">*</span></label>
               <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" required>
+              <span class="error-msg">Expiry date required</span>
             </div>
             <div class="form-group">
               <label>CVV <span class="required">*</span></label>
               <input type="text" id="cardCvv" placeholder="123" maxlength="4" required>
+              <span class="error-msg">CVV required</span>
             </div>
           </div>
           <h3>Your Order</h3>
@@ -662,6 +666,7 @@
       });
 
       document.getElementById('orderPayBtn').addEventListener('click', async function () {
+        if (!validateStep(4)) { alert('Please fill in all card details.'); return; }
         const userData = localStorage.getItem('rr_user');
         if (!userData) { alert('You must be logged in to register.'); return; }
         const user = JSON.parse(userData);
@@ -688,16 +693,50 @@
         const { error } = await window.supabase.from('registrations').insert(registrationData);
 
         this.disabled = false;
-        this.textContent = 'Credit/Debit Card';
+        this.innerHTML = '<i class="fas fa-lock"></i> Pay &amp; Complete Registration';
 
-        if (error) { alert('Registration failed: ' + error.message); return; }
-        alert('Registration Submitted! You will receive a confirmation email shortly.\n\nTotal Charged: ' + document.getElementById('orderTotalLine').textContent);
+        if (error) { this.disabled = false; this.innerHTML = '<i class="fas fa-lock"></i> Pay &amp; Complete Registration'; alert('Registration failed: ' + error.message); return; }
+        alert('Registration Submitted! Total: ' + document.getElementById('orderTotalLine').textContent);
         closeModal();
       });
 
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
       });
+
+      // ─── Search / Sort / Filter ───
+      function applyFilters() {
+        if (typeof window.applyEventFilters !== 'function') return;
+        var sortLink = document.querySelector('.sort-link.active');
+        var year = document.querySelector('.sort-year').value;
+        var search = document.querySelector('.search-bar input').value;
+        var searchType = document.querySelector('.search-type').value;
+        window.applyEventFilters({
+          sort: sortLink ? sortLink.textContent.toLowerCase().replace(/\s+/g, '') : 'upcoming',
+          year: year,
+          search: search,
+          searchType: searchType
+        });
+      }
+
+      var searchInput = document.querySelector('.search-bar input');
+      if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+      }
+      var searchType = document.querySelector('.search-type');
+      if (searchType) searchType.addEventListener('change', applyFilters);
+
+      document.querySelectorAll('.sort-link').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.querySelectorAll('.sort-link').forEach(function (l) { l.classList.remove('active'); });
+          this.classList.add('active');
+          applyFilters();
+        });
+      });
+
+      var yearSelect = document.querySelector('.sort-year');
+      if (yearSelect) yearSelect.addEventListener('change', applyFilters);
     });
   </script>
 </body>

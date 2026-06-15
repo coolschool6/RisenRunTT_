@@ -214,18 +214,22 @@
             <div class="form-group" style="grid-column:1/-1;">
               <label>Cardholder Name <span class="required">*</span></label>
               <input type="text" id="cardName" placeholder="John Doe" required>
+              <span class="error-msg">Cardholder name required</span>
             </div>
             <div class="form-group" style="grid-column:1/-1;">
               <label>Card Number <span class="required">*</span></label>
               <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+              <span class="error-msg">Card number required</span>
             </div>
             <div class="form-group">
               <label>Expiry Date <span class="required">*</span></label>
               <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" required>
+              <span class="error-msg">Expiry date required</span>
             </div>
             <div class="form-group">
               <label>CVV <span class="required">*</span></label>
               <input type="text" id="cardCvv" placeholder="123" maxlength="4" required>
+              <span class="error-msg">CVV required</span>
             </div>
           </div>
         </div>
@@ -379,6 +383,9 @@
         document.getElementById('modalEventSub').textContent = 'Register for ' + (name || 'this event');
         _cartQty = 1;
         updateCartDisplay();
+        // Reset form fields and validation
+        document.querySelectorAll('#registrationModal .form-group').forEach(function (g) { g.classList.remove('invalid'); });
+        document.querySelectorAll('#registrationModal input').forEach(function (i) { i.value = ''; });
         document.getElementById('registrationModal').classList.add('open');
         document.body.style.overflow = 'hidden';
       };
@@ -394,7 +401,39 @@
         _cartQty++; updateCartDisplay();
       });
 
+      function validateForm() {
+        var fields = [
+          { id: 'billFirstName', label: 'First name' },
+          { id: 'billLastName', label: 'Last name' },
+          { id: 'billPhone', label: 'Phone' },
+          { id: 'billEmail', label: 'Email' },
+          { id: 'attFirstName', label: 'Attendee first name' },
+          { id: 'attLastName', label: 'Attendee last name' },
+          { id: 'cardName', label: 'Cardholder name' },
+          { id: 'cardNumber', label: 'Card number' },
+          { id: 'cardExpiry', label: 'Expiry date' },
+          { id: 'cardCvv', label: 'CVV' }
+        ];
+        for (var i = 0; i < fields.length; i++) {
+          var el = document.getElementById(fields[i].id);
+          var group = el.closest('.form-group');
+          if (!el.value || !el.value.trim()) {
+            group.classList.add('invalid');
+            if (i === 0) el.focus();
+            return false;
+          }
+          group.classList.remove('invalid');
+          if (el.id === 'billEmail' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value)) {
+            group.classList.add('invalid');
+            el.focus();
+            return false;
+          }
+        }
+        return true;
+      }
+
       document.getElementById('orderPayBtn').addEventListener('click', async function () {
+        if (!validateForm()) { alert('Please fill in all required fields.'); return; }
         var userData = localStorage.getItem('rr_user');
         if (!userData) { alert('You must be logged in to register.'); return; }
         var user = JSON.parse(userData);
@@ -419,10 +458,7 @@
         };
 
         var { error } = await window.supabase.from('registrations').insert(regData);
-        this.disabled = false;
-        this.textContent = 'Complete Registration';
-
-        if (error) { alert('Registration failed: ' + error.message); return; }
+        if (error) { this.disabled = false; this.innerHTML = '<i class="fas fa-lock"></i> Pay with Card'; alert('Registration failed: ' + error.message); return; }
         alert('Registration Submitted! Total: TTD' + (_unitPrice * _cartQty + _processingFee).toFixed(2));
         closeModal();
       });

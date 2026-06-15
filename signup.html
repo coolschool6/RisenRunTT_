@@ -122,10 +122,11 @@
       </button>
       <nav class="nav" id="mainNav">
         <a href="index.html">Home</a>
-        <a href="events.html">Events</a>
+        <a href="events.html">Events & Results</a>
         <a href="login.html" id="navLogin">Login</a>
         <a href="signup.html" class="active btn-primary" id="navSignup">Sign Up</a>
         <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
         <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
         <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
       </nav>
@@ -279,7 +280,8 @@
             showNotification("Account created! Redirecting...", "success");
             setTimeout(function() { window.location.href = 'index.html'; }, 1000);
           } catch (err) {
-            showNotification(err.message, "error");
+            showNotification(err.message || JSON.stringify(err) || 'Signup failed. Check console for details.', "error");
+            console.error('Signup error:', err);
             if (submitBtn) submitBtn.textContent = "Create Account";
           }
         });

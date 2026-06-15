@@ -399,14 +399,29 @@
         badge.className = 'proof-status-badge ' + newStatus.toLowerCase();
         actionCell.innerHTML = '<span style="color:var(--gray);font-size:0.75rem;">' + newStatus + '</span>';
         // Update aggregate badges
-        updateAggregateBadges(regId, newStatus);
+        updateAggregateBadges(btn, regId, newStatus);
       }
 
-      function updateAggregateBadges(regId, newStatus) {
-        var card = document.querySelector('.event-admin-card[data-event-id]');
-        // Find the card that contains this registration (by traversing from the button)
-        // Actually, let's just update from the event_id context - skip for now, too complex
-        // The page can be refreshed to get accurate counts
+      function updateAggregateBadges(btn, regId, newStatus) {
+        var card = btn.closest('.event-admin-card');
+        if (!card) return;
+        var badges = card.querySelector('.eac-badges');
+        if (!badges) return;
+        // Decrement "Pending Proofs" when approving or rejecting
+        if (newStatus === 'Approved' || newStatus === 'Rejected') {
+          var pendingSpan = badges.querySelector('.pending-proofs');
+          if (pendingSpan) {
+            var match = pendingSpan.textContent.match(/\d+/);
+            if (match) {
+              var count = parseInt(match[0], 10) - 1;
+              if (count > 0) {
+                pendingSpan.textContent = 'Pending Proofs: ' + count;
+              } else {
+                pendingSpan.outerHTML = '<span class="eac-badge none-pending">No pending proofs</span>';
+              }
+            }
+          }
+        }
       }
     })();
   </script>

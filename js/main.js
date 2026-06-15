@@ -171,38 +171,118 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── Dynamic event loading ───
   const container = document.getElementById('raceListContainer');
-  if (container) loadEvents(container, false);
-
   const indexGrid = document.getElementById('dynamicEventGrid');
-  if (indexGrid) loadEvents(indexGrid, true);
-
   const carouselTrackEl = document.getElementById('carouselTrack');
-  if (carouselTrackEl && !carouselTrackEl.querySelector('.carousel-card')) loadCarousel(carouselTrackEl);
+  let _allEvents = [];
 
-  // ─── Load events ───
-  async function loadEvents(target, isIndex) {
-    try {
+  // Make filter controls work on the events page
+  window.applyEventFilters = function (filters) {
+    filters = filters || {};
+    var filtered = _allEvents.slice();
+    var sort = filters.sort || 'upcoming';
+    var year = filters.year || '';
+    var search = (filters.search || '').toLowerCase();
+    var searchType = filters.searchType || 'event';
+
+    // Search filter
+    if (search) {
+      filtered = filtered.filter(function (ev) {
+        if (searchType === 'event') {
+          return (ev.title || '').toLowerCase().indexOf(search) !== -1 ||
+                 (ev.location || '').toLowerCase().indexOf(search) !== -1 ||
+                 (ev.category || '').toLowerCase().indexOf(search) !== -1;
+        }
+        // athlete search - search by organizer_name
+        return (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
+      });
+    }
+
+    // Year filter
+    if (year) {
+      filtered = filtered.filter(function (ev) {
+        return ev.start_date && ev.start_date.indexOf(year) === 0;
+      });
+    }
+
+    // Sort
+    if (sort === 'upcoming') {
+      filtered.sort(function (a, b) {
+        if (!a.start_date) return 1; if (!b.start_date) return -1;
+        return a.start_date < b.start_date ? -1 : a.start_date > b.start_date ? 1 : 0;
+      });
+    } else if (sort === 'all') {
+      filtered.sort(function (a, b) {
+        if (!a.start_date) return 1; if (!b.start_date) return -1;
+        return a.start_date > b.start_date ? -1 : a.start_date < b.start_date ? 1 : 0;
+      });
+    }
+    // 'recommended' - keep original order (by creation date)
+
+    if (container) renderEventCards(container, filtered);
+  };
+
+  function renderEventCards(target, events) {
+    if (!events || events.length === 0) { target.innerHTML = '<p style="color:var(--gray)">No events match your filters.</p>'; return; }
+    const imgs = [
+      'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1461896836934-bd45ba8fcf9b?w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1579126038374-6064e9370f0f?w=400&h=300&fit=crop'
+    ];
+    target.innerHTML = events.map(function (ev) {
+      const img = ev.banner_url || imgs[ev.id % imgs.length];
+      let dateDisplay = ev.start_date || '';
+      if (ev.start_time) dateDisplay += ' \u00b7 ' + ev.start_time;
+      return '<div class="race-card" style="position:relative;cursor:pointer;" data-href="event_detail.html?id=' + ev.id + '">' +
+        '<button class="admin-only admin-delete-btn" data-id="' + ev.id + '" style="display:none;position:absolute;top:8px;right:8px;z-index:2;background:var(--accent-red);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;font-size:14px;line-height:1;">&times;</button>' +
+        '<div class="race-card-img-wrap"><img src="' + img + '" alt="' + ev.title + '" class="race-card-img"></div>' +
+        '<div class="race-card-content">' +
+          '<div class="race-card-info">' +
+            '<div class="race-card-datetime"><span>' + dateDisplay + '</span></div>' +
+            '<h3 class="race-card-name">' + ev.title + '</h3>' +
+            '<div class="race-card-venue">' + (ev.location || '') + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    document.querySelectorAll('.race-card').forEach(function (card) {
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('.admin-delete-btn')) return;
+        var href = this.dataset.href;
+        if (href) window.location.href = href;
+      });
+    });
+    if (window.currentUserRole === 'admin') {
+      document.querySelectorAll('.admin-only').forEach(function (el) { el.style.display = 'block'; });
+    }
+    // Admin delete handlers
+    document.querySelectorAll('.admin-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', async function (e) {
+        e.stopPropagation();
+        if (!confirm('Delete this event permanently?')) return;
+        var { error } = await window.supabase.from('events').delete().eq('id', this.dataset.id);
+        if (error) { alert('Delete failed: ' + error.message); return; }
+        this.closest('.race-card').remove();
+      });
+    });
+  }
+
+  // Initial event data load
+  if (container || indexGrid) {
+    (async function () {
       await window.adminPromise;
-      const { data: events, error } = await window.supabase.from('events').select('*').order('start_date', { ascending: true });
-      if (error) { target.innerHTML = '<p style="color:var(--gray)">Could not load events.</p>'; return; }
-      if (!events || events.length === 0) { target.innerHTML = '<p style="color:var(--gray)">No events available yet.</p>'; return; }
-
-      const imgs = [
-        'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1461896836934-bd45ba8fcf9b?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1579126038374-6064e9370f0f?w=400&h=300&fit=crop'
-      ];
-
-      if (isIndex) {
-        target.innerHTML = events.slice(0, 3).map(ev => {
-          const img = ev.banner_url || imgs[ev.id % imgs.length];
-          let dateDisplay = ev.start_date || '';
-          if (ev.start_time) dateDisplay += ' · ' + ev.start_time;
+      var { data: events, error } = await window.supabase.from('events').select('*').order('created_at', { ascending: false });
+      if (!error && events) _allEvents = events;
+      if (container) renderEventCards(container, _allEvents);
+      if (indexGrid) {
+        indexGrid.innerHTML = _allEvents.slice(0, 3).map(function (ev) {
+          var img = (ev.banner_url || 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop');
+          var dateDisplay = ev.start_date || '';
+          if (ev.start_time) dateDisplay += ' \u00b7 ' + ev.start_time;
           return '<div class="event-card" style="position:relative;cursor:pointer;" data-href="event_detail.html?id=' + ev.id + '">' +
             '<button class="admin-only admin-delete-btn" data-id="' + ev.id + '" style="display:none;position:absolute;top:8px;right:8px;z-index:2;background:var(--accent-red);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;font-size:14px;line-height:1;">&times;</button>' +
-            '<img src="' + img + '" alt="' + ev.title + '" class="event-card-img">' +
+            '<img src="' + img + '" alt="" class="event-card-img">' +
             '<div class="event-card-body">' +
               '<span class="event-card-date">' + dateDisplay + '</span>' +
               '<h3>' + ev.title + '</h3>' +
@@ -211,66 +291,18 @@ document.addEventListener('DOMContentLoaded', () => {
             '</div>' +
           '</div>';
         }).join('');
-      } else {
-        target.innerHTML = events.map(ev => {
-          const img = ev.banner_url || imgs[ev.id % imgs.length];
-          let dateDisplay = ev.start_date || '';
-          if (ev.start_time) dateDisplay += ' · ' + ev.start_time;
-          return '<div class="race-card" style="position:relative;cursor:pointer;" data-href="event_detail.html?id=' + ev.id + '">' +
-            '<button class="admin-only admin-delete-btn" data-id="' + ev.id + '" style="display:none;position:absolute;top:8px;right:8px;z-index:2;background:var(--accent-red);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;font-size:14px;line-height:1;">&times;</button>' +
-            '<div class="race-card-img-wrap"><img src="' + img + '" alt="' + ev.title + '" class="race-card-img"></div>' +
-            '<div class="race-card-content">' +
-              '<div class="race-card-info">' +
-                '<div class="race-card-datetime"><span>' + dateDisplay + '</span></div>' +
-                '<h3 class="race-card-name">' + ev.title + '</h3>' +
-                '<div class="race-card-venue">' + (ev.location || '') + '</div>' +
-              '</div>' +
-
-            '</div>' +
-          '</div>';
-        }).join('');
-
-        document.querySelectorAll('.race-card').forEach(card => {
-          card.addEventListener('click', e => {
+        document.querySelectorAll('.event-card').forEach(function (card) {
+          card.addEventListener('click', function (e) {
             if (e.target.closest('.admin-delete-btn')) return;
-            const href = card.dataset.href;
+            var href = this.dataset.href;
             if (href) window.location.href = href;
           });
         });
       }
-
-      document.querySelectorAll('.event-card').forEach(card => {
-        card.addEventListener('click', e => {
-          if (e.target.closest('.admin-delete-btn')) return;
-          const href = card.dataset.href;
-          if (href) window.location.href = href;
-        });
-      });
-
-      if (window.currentUserRole === 'admin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-      }
-
-      document.querySelectorAll('.admin-delete-btn').forEach(btn => {
-        btn.addEventListener('click', async e => {
-          e.stopPropagation();
-          try {
-            const { data: { user }, error } = await window.supabase.auth.getUser();
-            if (error || !user) { alert('Please log in first.'); return; }
-            const { data: profile } = await window.supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-            if (profile?.role !== 'admin') { alert('Only admins are allowed to edit events.'); return; }
-          } catch (_) { alert('Could not verify permissions.'); return; }
-          const eventId = btn.dataset.id;
-          if (!confirm('Delete this event permanently?')) return;
-          const { error: delErr } = await window.supabase.from('events').delete().eq('id', eventId);
-          if (delErr) { alert('Delete failed: ' + delErr.message); return; }
-          btn.closest('.race-card, .event-card').remove();
-        });
-      });
-    } catch (err) {
-      target.innerHTML = '<p style="color:var(--gray)">Could not connect to Supabase.</p>';
-    }
+    })();
   }
+
+  if (carouselTrackEl && !carouselTrackEl.querySelector('.carousel-card')) loadCarousel(carouselTrackEl);
 
   // ─── Load carousel ───
   async function loadCarousel(track) {
