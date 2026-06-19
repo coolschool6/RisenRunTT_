@@ -1,6 +1,7 @@
 // Supabase setup
 const supabaseUrl = "https://yfyopxzdvyntjnocnzpi.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmeW9weHpkdnludGpub2NuenBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0MTQ2MDYsImV4cCI6MjA5Njk5MDYwNn0.-p-k2H9AbOIW7_Ka5ZpybfFiCpImGMkl4dHIiuuEQFw";
+const STRAVA_CLIENT_ID = ''; // Set this when you register your Strava app
 const _supabaseCreateClient = window.supabase.createClient;
 window.supabase = _supabaseCreateClient(supabaseUrl, supabaseKey);
 window.currentUserRole = null;
@@ -114,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.currentUserRole = 'admin';
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
   }
+
   function hideAdminUI() {
     window.currentUserRole = 'user';
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
@@ -121,8 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function applyRoleFromStorage() {
     try {
-      var u = JSON.parse(localStorage.getItem('rr_user') || '{}');
-      console.log('[admin] rr_user from localStorage:', u);
+      const u = JSON.parse(localStorage.getItem('rr_user') || '{}');
       if (u.role === 'admin') { showAdminUI(); return true; }
     } catch (_) {}
     return false;
@@ -135,10 +136,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const { data: { user } } = await window.supabase.auth.getUser();
       if (!user) { console.log('[admin] no user'); window.adminResolve(); return; }
-      // Use RPC to bypass RLS — SECURITY DEFINER runs as table owner
       const { data: role, error: rpcErr } = await window.supabase.rpc('get_my_role');
-      console.log('[admin] rpc result:', role, rpcErr);
       if (role === 'admin') { showAdminUI(); }
+      else if (rpcErr) {
+        // RPC failed — fall back to localStorage role
+        const stored = JSON.parse(localStorage.getItem('rr_user') || '{}');
+        if (stored.role === 'admin') showAdminUI();
+      }
     } catch (e) { console.log('[admin] error:', e); }
     window.adminResolve();
     document.dispatchEvent(new CustomEvent('admin-status-resolved', { detail: { role: window.currentUserRole } }));
@@ -151,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupLink = document.getElementById('navSignup');
     const dashLink = document.getElementById('navDashboard');
     const logoutLink = document.getElementById('navLogout');
-    const saved = localStorage.getItem('rr_runner_name');
     let userData;
     try { userData = JSON.parse(localStorage.getItem('rr_user')); } catch (_) {}
 
@@ -166,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const displayName = document.getElementById('userDisplayName');
+    const saved = localStorage.getItem('rr_runner_name');
     if (displayName && saved) displayName.textContent = saved;
   })();
 
@@ -191,13 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Make filter controls work on the events page
   window.applyEventFilters = function (filters) {
     filters = filters || {};
-    var filtered = _allEvents.slice();
-    var sort = filters.sort || 'upcoming';
-    var year = filters.year || '';
-    var search = (filters.search || '').toLowerCase();
-    var searchType = filters.searchType || 'event';
+    let filtered = _allEvents.slice();
+    const sort = filters.sort || 'upcoming';
+    const year = filters.year || '';
+    const search = (filters.search || '').toLowerCase();
+    const searchType = filters.searchType || 'event';
 
-    // Search filter
     if (search) {
       filtered = filtered.filter(function (ev) {
         if (searchType === 'event') {
@@ -205,19 +208,16 @@ document.addEventListener('DOMContentLoaded', () => {
                  (ev.location || '').toLowerCase().indexOf(search) !== -1 ||
                  (ev.category || '').toLowerCase().indexOf(search) !== -1;
         }
-        // athlete search - search by organizer_name
         return (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
       });
     }
 
-    // Year filter
     if (year) {
       filtered = filtered.filter(function (ev) {
         return ev.start_date && ev.start_date.indexOf(year) === 0;
       });
     }
 
-    // Sort
     if (sort === 'upcoming') {
       filtered.sort(function (a, b) {
         if (!a.start_date) return 1; if (!b.start_date) return -1;
@@ -229,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return a.start_date > b.start_date ? -1 : a.start_date < b.start_date ? 1 : 0;
       });
     }
-    // 'recommended' - keep original order (by creation date)
 
     if (container) renderEventCards(container, filtered);
   };
@@ -244,7 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'https://images.unsplash.com/photo-1579126038374-6064e9370f0f?w=400&h=300&fit=crop'
     ];
     target.innerHTML = events.map(function (ev) {
-      const img = ev.banner_url || imgs[ev.id % imgs.length];
+      const safeId = ev.id || Math.floor(Math.random() * imgs.length);
+      const img = ev.banner_url || imgs[safeId % imgs.length];
       let dateDisplay = ev.start_date || '';
       if (ev.start_time) dateDisplay += ' \u00b7 ' + ev.start_time;
       return '<div class="race-card" style="position:relative;cursor:pointer;" data-href="event_detail.html?id=' + ev.id + '">' +
@@ -262,19 +262,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.race-card').forEach(function (card) {
       card.addEventListener('click', function (e) {
         if (e.target.closest('.admin-delete-btn')) return;
-        var href = this.dataset.href;
+        const href = this.dataset.href;
         if (href) window.location.href = href;
       });
     });
     if (window.currentUserRole === 'admin') {
       document.querySelectorAll('.admin-only').forEach(function (el) { el.style.display = 'block'; });
     }
-    // Admin delete handlers
     document.querySelectorAll('.admin-delete-btn').forEach(function (btn) {
       btn.addEventListener('click', async function (e) {
         e.stopPropagation();
         if (!confirm('Delete this event permanently?')) return;
-        var { error } = await window.supabase.from('events').delete().eq('id', this.dataset.id);
+        const { error } = await window.supabase.from('events').delete().eq('id', this.dataset.id);
         if (error) { alert('Delete failed: ' + error.message); return; }
         this.closest('.race-card').remove();
       });
@@ -285,13 +284,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (container || indexGrid) {
     (async function () {
       await window.adminPromise;
-      var { data: events, error } = await window.supabase.from('events').select('*').order('created_at', { ascending: false });
+      const { data: events, error } = await window.supabase.from('events').select('*').order('created_at', { ascending: false });
       if (!error && events) _allEvents = events;
       if (container) renderEventCards(container, _allEvents);
       if (indexGrid) {
         indexGrid.innerHTML = _allEvents.slice(0, 3).map(function (ev) {
-          var img = (ev.banner_url || 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop');
-          var dateDisplay = ev.start_date || '';
+          const safeId = ev.id || 0;
+          const img = (ev.banner_url || 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop');
+          let dateDisplay = ev.start_date || '';
           if (ev.start_time) dateDisplay += ' \u00b7 ' + ev.start_time;
           return '<div class="event-card" style="position:relative;cursor:pointer;" data-href="event_detail.html?id=' + ev.id + '">' +
             '<button class="admin-only admin-delete-btn" data-id="' + ev.id + '" style="display:none;position:absolute;top:8px;right:8px;z-index:2;background:var(--accent-red);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;font-size:14px;line-height:1;">&times;</button>' +
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.event-card').forEach(function (card) {
           card.addEventListener('click', function (e) {
             if (e.target.closest('.admin-delete-btn')) return;
-            var href = this.dataset.href;
+            const href = this.dataset.href;
             if (href) window.location.href = href;
           });
         });
@@ -332,7 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
 
       track.innerHTML = events.map(ev => {
-        const img = ev.banner_url || imgs[ev.id % imgs.length];
+        const safeId = ev.id || Math.floor(Math.random() * imgs.length);
+        const img = ev.banner_url || imgs[safeId % imgs.length];
         const cat = ev.category || 'Race';
         let dateDisplay = ev.start_date || '';
         if (ev.start_time) dateDisplay += ' · ' + ev.start_time;
@@ -348,7 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
           '</div>' +
         '</div>';
       }).join('');
-      // Make carousel cards clickable
       track.querySelectorAll('.carousel-card').forEach(card => {
         card.addEventListener('click', () => {
           const href = card.dataset.href;
@@ -356,6 +356,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
     } catch (_) {}
+  }
+
+  // ─── PWA: Register service worker ───
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // ─── PWA: Install prompt ───
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('installAppBtn');
+    if (installBtn) installBtn.style.display = 'inline-flex';
+  });
+
+  const installBtn = document.getElementById('installAppBtn');
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      if (result.outcome === 'accepted') installBtn.style.display = 'none';
+      deferredPrompt = null;
+    });
   }
 
 });

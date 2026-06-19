@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Confirmed – Rise & Run TT</title>
+  <meta name="description" content="Your race registration is confirmed.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a0000">
+  <style>
+    .confirm-section { padding: 60px 0; text-align: center; }
+    .confirm-card {
+      max-width: 560px; margin: 0 auto; background: var(--white);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 40px 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .confirm-card .check-icon {
+      width: 72px; height: 72px; border-radius: 50%; background: #d4edda;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; font-size: 2rem; color: #155724;
+    }
+    .confirm-card h1 { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+    .confirm-card .confirm-sub { color: var(--gray); margin: 8px 0 24px; }
+    .confirm-card .detail-row {
+      display: flex; justify-content: space-between; padding: 10px 0;
+      border-bottom: 1px solid var(--border); font-size: 0.9rem;
+    }
+    .confirm-card .detail-row .label { font-weight: 600; color: var(--primary); }
+    .confirm-card .detail-row .value { color: var(--gray); }
+    .confirm-card .actions { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-confirm-action {
+      padding: 12px 28px; border-radius: var(--radius-full); font-weight: 700;
+      font-size: 0.9rem; cursor: pointer; transition: var(--transition); text-decoration: none;
+    }
+    .btn-confirm-primary { background: var(--accent-red); color: var(--white); border: none; }
+    .btn-confirm-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(204,0,0,0.3); }
+    .btn-confirm-secondary { background: transparent; color: var(--gray); border: 2px solid var(--border); }
+    .btn-confirm-secondary:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-add-calendar {
+      padding: 8px 20px; border-radius: var(--radius-full); font-weight: 600;
+      font-size: 0.85rem; cursor: pointer; background: var(--light-gray);
+      border: 1px solid var(--border); color: var(--primary); transition: var(--transition);
+    }
+    .btn-add-calendar:hover { border-color: var(--accent-red); color: var(--accent-red); }
+    .loading-spinner { text-align: center; padding: 80px 20px; color: var(--gray); }
+    .loading-spinner i { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.4; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">RR</div>
+        Rise & Run TT
+      </a>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <nav class="nav" id="mainNav">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events & Results</a>
+        <a href="leaderboard.html">Leaderboard</a>
+        <a href="login.html" id="navLogin">Login</a>
+        <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
+        <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
+        <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="confirm-section">
+    <div class="container">
+      <div id="confirmationContainer">
+        <div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i><p>Loading confirmation...</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand"><h3>Rise & Run TT</h3></div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events & Results</a></li>
+            <li><a href="leaderboard.html">Leaderboard</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    (async function () {
+      const params = new URLSearchParams(window.location.search);
+      const eventId = params.get('id');
+      const container = document.getElementById('confirmationContainer');
+
+      if (!eventId) {
+        container.innerHTML = '<div class="confirm-card"><p style="color:var(--gray);">No registration information found. <a href="events.html" style="color:var(--accent-red);font-weight:600;">Browse events</a></p></div>';
+        return;
+      }
+
+      // Fetch the event details
+      const { data: ev } = await window.supabase.from('events').select('*').eq('id', eventId).maybeSingle();
+      if (!ev) {
+        container.innerHTML = '<div class="confirm-card"><p style="color:var(--gray);">Event not found. <a href="events.html" style="color:var(--accent-red);font-weight:600;">Browse events</a></p></div>';
+        return;
+      }
+
+      const userData = JSON.parse(localStorage.getItem('rr_user') || '{}');
+      const runnerName = userData.name || 'Runner';
+
+      container.innerHTML =
+        '<div class="confirm-card">' +
+          '<div class="check-icon"><i class="fas fa-check"></i></div>' +
+          '<h1>Registration Confirmed!</h1>' +
+          '<p class="confirm-sub">Thank you, ' + runnerName + '. You\'re registered for <strong>' + ev.title + '</strong>.</p>' +
+          '<div class="detail-row"><span class="label">Event</span><span class="value">' + ev.title + '</span></div>' +
+          '<div class="detail-row"><span class="label">Date</span><span class="value">' + (ev.start_date || 'TBD') + (ev.start_time ? ' at ' + ev.start_time : '') + '</span></div>' +
+          (ev.location ? '<div class="detail-row"><span class="label">Location</span><span class="value">' + ev.location + '</span></div>' : '') +
+          (ev.price && ev.price !== '0.00' ? '<div class="detail-row"><span class="label">Amount</span><span class="value">TTD' + ev.price + ' (Demo - No Charge)</span></div>' : '<div class="detail-row"><span class="label">Amount</span><span class="value">Free</span></div>') +
+          '<div class="detail-row"><span class="label">Status</span><span class="value" style="color:#155724;font-weight:700;">Registered</span></div>' +
+          '<div class="actions">' +
+            '<a href="dashboard.html" class="btn-confirm-action btn-confirm-primary"><i class="fas fa-running"></i> My Dashboard</a>' +
+            '<a href="events.html" class="btn-confirm-action btn-confirm-secondary"><i class="fas fa-calendar-alt"></i> More Events</a>' +
+          '</div>' +
+          '<div style="margin-top:20px;"><button class="btn-add-calendar" onclick="downloadIcs(\'' + ev.title.replace(/'/g, "\\'") + '\', \'' + (ev.start_date || '') + '\', \'' + (ev.start_time || '') + '\', \'' + (ev.location || '').replace(/'/g, "\\'") + '\')"><i class="fas fa-calendar-plus"></i> Add to Calendar</button></div>' +
+          '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:0.8rem;color:var(--gray);">' +
+            'A confirmation email will be sent to your registered email address.' +
+          '</div>' +
+        '</div>';
+    })();
+
+    window.downloadIcs = function (title, date, time, location) {
+      const startDate = date ? date.replace(/-/g, '') : '20260101';
+      const startTime = time ? time.replace(/:/g, '') + '00' : '000000';
+      const start = startDate + 'T' + startTime;
+      const endDate = date ? date.replace(/-/g, '') : '20260101';
+      const endTime = time ? time.replace(/:/g, '') + '00' : '010000';
+      const end = endDate + 'T' + endTime;
+
+      const icsContent = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\n' +
+        'DTSTART:' + start + '\r\nDTEND:' + end + '\r\n' +
+        'SUMMARY:' + title + ' (Rise & Run TT)\r\n' +
+        'LOCATION:' + location + '\r\nDESCRIPTION:Registered via Rise & Run TT\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n';
+
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = title.replace(/\s+/g, '_') + '.ics';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    };
+  </script>
+</body>
+</html>

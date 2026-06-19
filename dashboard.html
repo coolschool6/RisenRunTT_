@@ -8,6 +8,8 @@
   <meta name="description" content="Your running dashboard. Track virtual race registrations, submit proof, and manage your Rise & Run TT profile.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a0000">
   <style>
     .dash-hero {
       background: linear-gradient(135deg, #1a0000 0%, #4a0000 50%, #8b0000 100%);
@@ -24,6 +26,12 @@
       font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition);
     }
     .dash-hero .dash-meta .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+    .dash-hero .dash-meta .btn-profile {
+      padding: 6px 18px; border: 1.5px solid var(--accent);
+      border-radius: var(--radius-full); background: transparent; color: var(--accent);
+      font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition); text-decoration: none;
+    }
+    .dash-hero .dash-meta .btn-profile:hover { background: var(--accent); color: var(--primary); }
 
     .dash-section { padding: 40px 0 60px; }
     .dash-section h2 { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
@@ -47,6 +55,7 @@
     .reg-status.pending { background: #fff3cd; color: #856404; }
     .reg-status.approved { background: #d4edda; color: #155724; }
     .reg-status.rejected { background: #f8d7da; color: #721c24; }
+    .reg-status.not-submitted { background: #e2e3e5; color: #383d41; }
 
     .proof-box {
       margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
@@ -68,6 +77,11 @@
     .empty-state i { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.4; }
     .empty-state p { font-size: 0.9rem; }
 
+    .avatar-img {
+      width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--accent); margin-right: 8px; vertical-align: middle;
+    }
+
     @media (max-width: 768px) {
       .dash-hero h1 { font-size: 1.4rem; }
       .dash-grid { grid-template-columns: 1fr; }
@@ -87,11 +101,14 @@
       <nav class="nav" id="mainNav">
         <a href="index.html">Home</a>
         <a href="events.html">Events & Results</a>
+        <a href="leaderboard.html">Leaderboard</a>
         <a href="login.html" id="navLogin">Login</a>
         <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
         <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="profile.html" style="display:none;color:var(--accent);font-weight:700;" id="navProfile">Profile</a>
         <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
         <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <button id="installAppBtn" style="display:none;background:none;border:1px solid var(--accent);color:var(--accent);padding:6px 14px;border-radius:var(--radius-full);font-size:0.8rem;cursor:pointer;"><i class="fas fa-download"></i> Install App</button>
         <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
       </nav>
     </div>
@@ -103,6 +120,7 @@
       <p>Your virtual race hub — track registrations, submit proof, and conquer the leaderboard.</p>
       <div class="dash-meta">
         <span id="stravaStatus" style="font-size:0.82rem;opacity:0.8;"><i class="fab fa-strava" style="color:#fc4c02;"></i> <span id="stravaStatusText">Checking...</span> <button id="stravaToggleBtn" style="display:none;padding:3px 10px;border-radius:var(--radius-full);border:1px solid rgba(255,255,255,0.3);background:transparent;color:var(--white);font-size:0.75rem;cursor:pointer;margin-left:6px;"></button></span>
+        <a href="profile.html" class="btn-profile"><i class="fas fa-user"></i> My Profile</a>
         <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Log Out</button>
       </div>
     </div>
@@ -129,6 +147,7 @@
           <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="events.html">Events & Results</a></li>
+            <li><a href="leaderboard.html">Leaderboard</a></li>
             <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="login.html">Login</a></li>
             <li><a href="signup.html">Sign Up</a></li>
@@ -137,10 +156,10 @@
         <div class="footer-col">
           <h4>Support</h4>
           <ul>
-            <li><a href="#">How It Works</a></li>
-            <li><a href="#">Terms & Conditions</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">FAQ</a></li>
+            <li><a href="#" title="Coming soon">How It Works</a></li>
+            <li><a href="#" title="Coming soon">Terms & Conditions</a></li>
+            <li><a href="#" title="Coming soon">Privacy Policy</a></li>
+            <li><a href="#" title="Coming soon">FAQ</a></li>
           </ul>
         </div>
       </div>
@@ -159,14 +178,15 @@
   <script>
     // ─── Session check ───
     (async function () {
-      var localUser;
+      let localUser;
       try { localUser = JSON.parse(localStorage.getItem('rr_user')); } catch (_) {}
       if (!localUser || !localUser.id) { window.location.href = 'login.html'; return; }
       document.getElementById('dashUserName').textContent = localUser.name || 'Athlete';
       document.getElementById('navLogin').style.display = 'none';
       document.getElementById('navSignup').style.display = 'none';
       document.getElementById('navDashboard').style.display = 'inline-flex';
-      var navAdminLink = document.getElementById('navAdmin');
+      document.getElementById('navProfile').style.display = 'inline-flex';
+      let navAdminLink = document.getElementById('navAdmin');
       if (navAdminLink) navAdminLink.href = 'admin_dashboard.html';
     })();
   </script>
@@ -174,11 +194,11 @@
   <script>
     // ─── Load registrations ───
     (async function () {
-      var container = document.getElementById('registrationsContainer');
-      var userData = JSON.parse(localStorage.getItem('rr_user') || '{}');
+      const container = document.getElementById('registrationsContainer');
+      const userData = JSON.parse(localStorage.getItem('rr_user') || '{}');
       if (!userData.id) { container.innerHTML = '<div class="empty-state"><i class="fas fa-user-slash"></i><p>Session not found. Please log in again.</p></div>'; return; }
 
-      var { data: registrations, error } = await supabase
+      const { data: registrations, error } = await window.supabase
         .from('registrations')
         .select('*, events(*)')
         .eq('user_id', userData.id)
@@ -191,7 +211,7 @@
         return;
       }
 
-      var imgs = [
+      const imgs = [
         'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=400&h=300&fit=crop',
@@ -199,12 +219,13 @@
       ];
 
       container.innerHTML = '<div class="dash-grid">' + registrations.map(function (r) {
-        var ev = r.events || {};
-        var img = ev.banner_url || imgs[(ev.id || 1) % imgs.length];
-        var pClass = (r.proof_status || 'Not Submitted').toLowerCase().replace(/\s+/g, '-');
-        var dateDisplay = ev.start_date || 'TBD';
+        const ev = r.events || {};
+        const safeId = ev.id || 0;
+        const img = ev.banner_url || imgs[safeId % imgs.length];
+        const pClass = (r.proof_status || 'Not Submitted').toLowerCase().replace(/\s+/g, '-');
+        let dateDisplay = ev.start_date || 'TBD';
         if (ev.start_time) dateDisplay += ' \u00b7 ' + ev.start_time;
-        var pText = r.proof_status || 'Not Submitted';
+        const pText = r.proof_status || 'Not Submitted';
 
         return '<div class="reg-card" data-reg-id="' + r.id + '">' +
           (img ? '<img src="' + img + '" alt="' + (ev.title || 'Race') + '" class="reg-card-img">' : '') +
@@ -225,45 +246,46 @@
         '</div>';
       }).join('') + '</div>';
 
-      // Strava sync buttons — show inline notification
+      // Strava sync buttons
       document.querySelectorAll('.btn-strava-sync').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          var regId = this.dataset.regId;
-          var statusEl = document.getElementById('uploadStatus_' + regId);
-          statusEl.innerHTML = '<span style="color:#fc4c02;"><i class="fas fa-spinner fa-pulse"></i> Establishing secure OAuth2 handshake with Strava API... Syncing activities.</span>';
-          setTimeout(function () {
-            statusEl.innerHTML = '<span style="color:#fc4c02;">&#10003; Strava sync complete. Activities imported.</span>';
-          }, 2500);
+          const regId = this.dataset.regId;
+          const statusEl = document.getElementById('uploadStatus_' + regId);
+          if (!STRAVA_CLIENT_ID) {
+            statusEl.innerHTML = '<span style="color:var(--gray);">Strava sync coming soon — stay tuned!</span>';
+            return;
+          }
+          statusEl.innerHTML = '<span style="color:#fc4c02;"><i class="fas fa-spinner fa-pulse"></i> Connecting to Strava...</span>';
+          // In production, redirect to Strava OAuth:
+          // window.location.href = 'https://www.strava.com/oauth/authorize?client_id=' + STRAVA_CLIENT_ID + '&redirect_uri=' + window.location.origin + '/strava-callback.html&response_type=code&scope=activity:read';
         });
       });
 
       // Manual upload listeners
       document.querySelectorAll('.btn-manual-upload').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          var fileInput = this.parentElement.parentElement.querySelector('.proof-file-input');
+          const fileInput = this.parentElement.parentElement.querySelector('.proof-file-input');
           if (fileInput) fileInput.click();
         });
       });
 
       document.querySelectorAll('.proof-file-input').forEach(function (input) {
         input.addEventListener('change', async function () {
-          var file = this.files[0];
+          const file = this.files[0];
           if (!file) return;
-          var regId = this.dataset.regId;
-          var statusEl = document.getElementById('uploadStatus_' + regId);
+          const regId = this.dataset.regId;
+          const statusEl = document.getElementById('uploadStatus_' + regId);
           statusEl.textContent = 'Uploading...';
 
-          // Upload to Supabase Storage
-          var filePath = 'proofs/' + regId + '/' + Date.now() + '_' + file.name;
-          var { data: uploadData, error: uploadError } = await window.supabase.storage.from('proofs').upload(filePath, file, { upsert: true });
+          const filePath = 'proofs/' + regId + '/' + Date.now() + '_' + file.name;
+          const { data: uploadData, error: uploadError } = await window.supabase.storage.from('proofs').upload(filePath, file, { upsert: true });
 
           if (uploadError) { statusEl.textContent = 'Upload failed: ' + uploadError.message; return; }
 
-          var { data: publicUrlData } = window.supabase.storage.from('proofs').getPublicUrl(filePath);
-          var screenshotUrl = publicUrlData.publicUrl;
+          const { data: publicUrlData } = window.supabase.storage.from('proofs').getPublicUrl(filePath);
+          const screenshotUrl = publicUrlData.publicUrl;
 
-          // Update registration row
-          var { error: updateError } = await window.supabase.from('registrations').update({ screenshot_url: screenshotUrl, proof_status: 'Pending' }).eq('id', regId);
+          const { error: updateError } = await window.supabase.from('registrations').update({ screenshot_url: screenshotUrl, proof_status: 'Pending' }).eq('id', regId);
 
           if (updateError) { statusEl.textContent = 'Database update failed: ' + updateError.message; return; }
 
@@ -273,22 +295,22 @@
     })();
   </script>
   <script>
-    // ─── Strava connection (placeholder) ───
+    // ─── Strava connection ───
     (async function () {
-      var userData;
+      let userData;
       try { userData = JSON.parse(localStorage.getItem('rr_user')); } catch (_) {}
       if (!userData || !userData.id) return;
 
-      var { data: profile } = await supabase.from('profiles').select('strava_connected').eq('id', userData.id).maybeSingle();
-      var connected = profile && profile.strava_connected;
+      const { data: profile } = await window.supabase.from('profiles').select('strava_connected').eq('id', userData.id).maybeSingle();
+      const connected = profile && profile.strava_connected;
 
       document.getElementById('stravaStatusText').textContent = connected ? 'Connected \u2714' : 'Not Connected';
-      var btn = document.getElementById('stravaToggleBtn');
+      const btn = document.getElementById('stravaToggleBtn');
       btn.style.display = 'inline-block';
       btn.textContent = connected ? 'Disconnect' : 'Connect';
       btn.addEventListener('click', async function () {
-        var newVal = !connected;
-        var { error } = await supabase.from('profiles').update({ strava_connected: newVal }).eq('id', userData.id);
+        const newVal = !connected;
+        const { error } = await window.supabase.from('profiles').update({ strava_connected: newVal }).eq('id', userData.id);
         if (error) { alert('Failed to update Strava connection.'); return; }
         connected = newVal;
         document.getElementById('stravaStatusText').textContent = connected ? 'Connected \u2714' : 'Not Connected';
@@ -297,7 +319,7 @@
     })();
   </script>
   <script>
-    // ─── Logout (placed last so main.js runs first) ───
+    // ─── Logout ───
     document.getElementById('logoutBtn').addEventListener('click', async function () {
       await window.supabase.auth.signOut();
       localStorage.removeItem('rr_token');

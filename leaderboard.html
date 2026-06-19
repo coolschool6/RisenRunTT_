@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard – Rise & Run TT</title>
+  <meta name="description" content="Race leaderboards for Trinidad and Tobago running events. See how you rank against other runners.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a0000">
+  <style>
+    .lb-hero {
+      background: linear-gradient(135deg, #1a0000 0%, #4a0000 50%, #8b0000 100%);
+      padding: 60px 0 40px; text-align: center; color: var(--white);
+      border-radius: 0 0 40px 40px;
+    }
+    .lb-hero h1 { font-size: 2rem; font-weight: 900; }
+    .lb-hero h1 span { color: var(--accent); }
+    .lb-hero p { opacity: 0.85; margin-top: 6px; }
+
+    .lb-section { padding: 40px 0 60px; }
+    .lb-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; align-items: center; }
+    .lb-controls select {
+      padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.9rem; color: var(--black); background: var(--white); outline: none;
+    }
+    .lb-controls select:focus { border-color: var(--accent-red); }
+
+    .lb-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+    .lb-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .lb-table th {
+      background: var(--primary); color: var(--white); text-align: left;
+      padding: 12px 16px; font-weight: 700; white-space: nowrap;
+    }
+    .lb-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .lb-table tr:hover td { background: var(--light-gray); }
+    .lb-table .rank {
+      width: 36px; height: 36px; border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;
+    }
+    .rank-1 { background: var(--accent); color: var(--primary); }
+    .rank-2 { background: #c0c0c0; color: var(--primary); }
+    .rank-3 { background: #cd7f32; color: var(--white); }
+    .rank-other { background: var(--light-gray); color: var(--gray); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--gray); }
+    .empty-state i { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.4; }
+
+    @media (max-width: 768px) {
+      .lb-hero h1 { font-size: 1.5rem; }
+      .lb-table th, .lb-table td { padding: 8px 10px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">RR</div>
+        Rise & Run TT
+      </a>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <nav class="nav" id="mainNav">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events & Results</a>
+        <a href="leaderboard.html" class="active">Leaderboard</a>
+        <a href="login.html" id="navLogin">Login</a>
+        <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
+        <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
+        <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <button id="installAppBtn" style="display:none;background:none;border:1px solid var(--accent);color:var(--accent);padding:6px 14px;border-radius:var(--radius-full);font-size:0.8rem;cursor:pointer;"><i class="fas fa-download"></i> Install App</button>
+        <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="lb-hero">
+    <div class="container">
+      <h1><i class="fas fa-trophy" style="color:var(--accent);margin-right:8px;"></i> <span>Leaderboard</span></h1>
+      <p>See how you stack up against runners across Trinidad & Tobago.</p>
+    </div>
+  </section>
+
+  <section class="lb-section">
+    <div class="container">
+      <div class="lb-controls">
+        <label style="font-weight:700;color:var(--primary);">Select Event:</label>
+        <select id="eventSelect"><option value="">Loading events...</option></select>
+      </div>
+      <div id="leaderboardContainer">
+        <div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading leaderboard...</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand"><h3>Rise & Run TT</h3></div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events & Results</a></li>
+            <li><a href="leaderboard.html">Leaderboard</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#" title="Coming soon">How It Works</a></li>
+            <li><a href="#" title="Coming soon">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    (async function () {
+      const eventSelect = document.getElementById('eventSelect');
+      const container = document.getElementById('leaderboardContainer');
+
+      // Load events that have results
+      const { data: events } = await window.supabase.from('events').select('id, title').order('start_date', { ascending: false });
+      if (!events || events.length === 0) {
+        eventSelect.innerHTML = '<option value="">No events available</option>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-times"></i><p>No events with results yet.</p></div>';
+        return;
+      }
+
+      eventSelect.innerHTML = '<option value="">-- Select an event --</option>' +
+        events.map(e => '<option value="' + e.id + '">' + e.title + '</option>').join('');
+
+      async function loadLeaderboard(eventId) {
+        if (!eventId) { container.innerHTML = '<div class="empty-state"><i class="fas fa-hand-pointer"></i><p>Select an event to view results.</p></div>'; return; }
+
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading results...</p></div>';
+
+        const { data: results } = await window.supabase
+          .from('results')
+          .select('*')
+          .eq('event_id', eventId)
+          .eq('proof_status', 'approved')
+          .order('position', { ascending: true });
+
+        if (!results || results.length === 0) {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-hourglass"></i><p>No results published yet for this event.</p></div>';
+          return;
+        }
+
+        container.innerHTML =
+          '<div class="lb-table-wrap"><table class="lb-table">' +
+          '<thead><tr><th>#</th><th>Name</th><th>Time</th><th>Distance</th></tr></thead><tbody>' +
+          results.map(function (r, i) {
+            const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
+            return '<tr>' +
+              '<td><span class="rank ' + rankClass + '">' + r.position + '</span></td>' +
+              '<td><strong>' + r.full_name + '</strong></td>' +
+              '<td>' + r.time_formatted + '</td>' +
+              '<td>' + r.distance + '</td>' +
+            '</tr>';
+          }).join('') +
+          '</tbody></table></div>';
+      }
+
+      eventSelect.addEventListener('change', function () {
+        loadLeaderboard(this.value);
+      });
+    })();
+  </script>
+</body>
+</html>

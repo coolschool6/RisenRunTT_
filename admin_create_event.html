@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Event – Rise & Run TT</title>
-  <meta name="description" content="Admin event creation page.">
+  <title>Create Event – Admin – Rise & Run TT</title>
+  <meta name="description" content="Create a new road race or running event on Rise & Run TT.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a0000">
   <style>
     body { background: var(--light-gray); }
     .create-section { padding: 40px 0 60px; }
@@ -121,11 +123,14 @@
       <nav class="nav" id="mainNav">
         <a href="index.html">Home</a>
         <a href="events.html">Events & Results</a>
+        <a href="leaderboard.html">Leaderboard</a>
         <a href="login.html" id="navLogin">Login</a>
         <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
         <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="profile.html" style="display:none;color:var(--accent);font-weight:700;" id="navProfile">Profile</a>
         <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
         <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <button id="installAppBtn" style="display:none;background:none;border:1px solid var(--accent);color:var(--accent);padding:6px 14px;border-radius:var(--radius-full);font-size:0.8rem;cursor:pointer;"><i class="fas fa-download"></i> Install App</button>
         <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
       </nav>
     </div>
@@ -205,7 +210,7 @@
           <div class="file-wrap">
             <span class="file-btn" id="bannerBtn">Choose File</span>
             <span class="file-name" id="bannerFileName">No file chosen</span>
-            <span class="file-size">Maximum file size: 2 GB.</span>
+            <span class="file-size">Maximum file size: 2 MB.</span>
             <input type="file" id="fBanner" accept="image/*">
           </div>
           <img class="banner-preview" id="bannerPreview">
@@ -304,6 +309,7 @@
           <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="events.html">Events & Results</a></li>
+            <li><a href="leaderboard.html">Leaderboard</a></li>
             <li><a href="login.html">Login</a></li>
             <li><a href="signup.html">Sign Up</a></li>
           </ul>
