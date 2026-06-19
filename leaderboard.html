@@ -173,7 +173,9 @@
           .eq('proof_status', 'Approved')
           .not('screenshot_url', 'is', null)
           .not('screenshot_url', 'eq', '')
-          .order('proof_verified_at', { ascending: true, nullsLast: true });
+          .not('finish_time', 'is', null)
+          .not('finish_time', 'eq', '')
+          .order('finish_time', { ascending: true, nullsLast: true });
 
         if (!regs || regs.length === 0) {
           container.innerHTML = '<div class="empty-state"><i class="fas fa-hourglass"></i><p>No results published yet for this event.</p></div>';
