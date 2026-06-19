@@ -76,10 +76,6 @@
       cursor: pointer;
     }
     .create-card .toggle-wrap label { cursor: pointer; font-size: 0.85rem; color: var(--gray); }
-    .create-card .organizer-note {
-      font-size: 0.8rem; color: var(--gray);
-      background: var(--light-gray); border-radius: 8px; padding: 12px 16px; margin-top: 4px;
-    }
     .create-card .form-actions {
       display: flex; gap: 12px; margin-top: 28px; padding-top: 24px;
       border-top: 1px solid var(--border);
@@ -98,16 +94,86 @@
       cursor: pointer; transition: var(--transition); text-decoration: none;
     }
     .create-card .form-actions .btn-cancel:hover { border-color: var(--primary); color: var(--primary); }
-    .create-card .radio-group { display: flex; gap: 16px; margin-top: 4px; }
-    .create-card .radio-group label {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.85rem; font-weight: 500; color: var(--gray); cursor: pointer;
-    }
-    .create-card .radio-group input[type=radio] { accent-color: var(--accent-red); width: 16px; height: 16px; }
     @media (max-width: 640px) {
       .create-card { padding: 20px; }
       .create-card .row { grid-template-columns: 1fr; }
     }
+
+    /* ─── Event Type Cards ─── */
+    .event-type-cards {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+      margin-top: 6px;
+    }
+    .event-type-card {
+      border: 2px solid var(--border); border-radius: 12px;
+      padding: 20px 12px; text-align: center; cursor: pointer;
+      transition: var(--transition); background: var(--white);
+      user-select: none;
+    }
+    .event-type-card:hover { border-color: var(--accent-red); background: #fff5f5; }
+    .event-type-card.active {
+      border-color: var(--accent-red); background: #fff0f0;
+      box-shadow: 0 0 0 3px rgba(204,0,0,0.1);
+    }
+    .event-type-card .etc-icon {
+      font-size: 2rem; color: var(--gray); margin-bottom: 8px;
+      display: block;
+    }
+    .event-type-card.active .etc-icon { color: var(--accent-red); }
+    .event-type-card .etc-label {
+      font-size: 0.85rem; font-weight: 700; color: var(--primary);
+    }
+    .event-type-card.active .etc-label { color: var(--accent-red); }
+    .event-type-card .etc-desc {
+      font-size: 0.72rem; color: var(--gray); margin-top: 4px;
+    }
+    .event-type-radio { display: none; }
+    @media (max-width: 500px) {
+      .event-type-cards { grid-template-columns: 1fr; }
+    }
+
+    /* ─── Conditional section fade ─── */
+    .cond-section { transition: opacity 0.25s ease, max-height 0.3s ease; overflow: hidden; max-height: 600px; opacity: 1; }
+    .cond-section.hidden { max-height: 0; opacity: 0; margin: 0; padding: 0; pointer-events: none; }
+
+    /* ─── Custom Modal ─── */
+    .custom-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.55); align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .custom-modal-overlay.open { display: flex; }
+    .custom-modal {
+      background: var(--white); border-radius: 16px; max-width: 420px;
+      width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .custom-modal-header {
+      padding: 20px 24px 0; display: flex; align-items: center; gap: 12px;
+    }
+    .custom-modal-header .cm-icon {
+      width: 40px; height: 40px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+    }
+    .custom-modal-header .cm-icon.info { background: #e8f4fd; color: #0a7abf; }
+    .custom-modal-header .cm-icon.success { background: #e6f9ed; color: #148a3b; }
+    .custom-modal-header .cm-icon.warn { background: #fff3e0; color: #c67600; }
+    .custom-modal-header .cm-icon.error { background: #ffe8e8; color: #c00; }
+    .custom-modal-header .cm-icon.confirm { background: #fff3e0; color: #c67600; }
+    .custom-modal-title { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+    .custom-modal-body { padding: 12px 24px 20px; font-size: 0.9rem; color: var(--gray); line-height: 1.5; }
+    .custom-modal-footer { padding: 0 24px 20px; display: flex; gap: 10px; justify-content: flex-end; }
+    .custom-modal-footer .cm-btn {
+      padding: 10px 24px; border-radius: var(--radius-full); font-weight: 600;
+      font-size: 0.85rem; border: none; cursor: pointer; transition: var(--transition);
+    }
+    .custom-modal-footer .cm-btn.primary { background: var(--accent-red); color: var(--white); }
+    .custom-modal-footer .cm-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(204,0,0,0.3); }
+    .custom-modal-footer .cm-btn.secondary { background: var(--light-gray); color: var(--gray); }
+    .custom-modal-footer .cm-btn.secondary:hover { background: #ddd; }
+    .custom-modal-footer .cm-btn.danger { background: var(--accent-red); color: var(--white); }
+    .custom-modal-footer .cm-btn.danger:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(204,0,0,0.3); }
   </style>
 </head>
 <body>
@@ -147,6 +213,30 @@
 
       <form class="create-card" id="editEventForm">
 
+        <div class="field">
+          <label>Event Type <span class="req">*</span></label>
+          <div class="event-type-cards" id="eventTypeCards">
+            <label class="event-type-card" data-value="virtual">
+              <input type="radio" name="eventType" value="virtual" class="event-type-radio">
+              <span class="etc-icon"><i class="fas fa-laptop"></i></span>
+              <span class="etc-label">Virtual</span>
+              <span class="etc-desc">Online / remote event</span>
+            </label>
+            <label class="event-type-card" data-value="in-person">
+              <input type="radio" name="eventType" value="in-person" class="event-type-radio">
+              <span class="etc-icon"><i class="fas fa-map-marker-alt"></i></span>
+              <span class="etc-label">In-Person</span>
+              <span class="etc-desc">Physical location event</span>
+            </label>
+            <label class="event-type-card" data-value="both">
+              <input type="radio" name="eventType" value="both" class="event-type-radio">
+              <span class="etc-icon"><i class="fas fa-globe-americas"></i></span>
+              <span class="etc-label">Both</span>
+              <span class="etc-desc">Virtual & in-person</span>
+            </label>
+          </div>
+        </div>
+
         <h2>Event Details</h2>
 
         <div class="field">
@@ -159,7 +249,7 @@
           <input type="text" id="fOrganizer" placeholder="Organizer name">
         </div>
 
-        <div class="field">
+        <div class="field cond-section" id="locationField">
           <label>Event Location <span class="req">*</span></label>
           <input type="text" id="fLocation" placeholder="Location for google map">
         </div>
@@ -233,25 +323,27 @@
           <input type="url" id="fVideoUrl" placeholder="Please enter event video url">
         </div>
 
-        <div class="row">
-          <div class="field">
-            <label>Start Date <span class="req">*</span></label>
-            <input type="date" id="fStartDate" required>
+        <div class="cond-section" id="timingFields">
+          <div class="row">
+            <div class="field">
+              <label>Start Date <span class="req">*</span></label>
+              <input type="date" id="fStartDate" required>
+            </div>
+            <div class="field">
+              <label>Start Time <span class="req">*</span></label>
+              <input type="time" id="fStartTime" required>
+            </div>
           </div>
-          <div class="field">
-            <label>Start Time <span class="req">*</span></label>
-            <input type="time" id="fStartTime" required>
-          </div>
-        </div>
 
-        <div class="row">
-          <div class="field">
-            <label>End Date</label>
-            <input type="date" id="fEndDate">
-          </div>
-          <div class="field">
-            <label>End Time (optional)</label>
-            <input type="time" id="fEndTime">
+          <div class="row">
+            <div class="field">
+              <label>End Date</label>
+              <input type="date" id="fEndDate">
+            </div>
+            <div class="field">
+              <label>End Time (optional)</label>
+              <input type="time" id="fEndTime">
+            </div>
           </div>
         </div>
 
@@ -273,25 +365,6 @@
           </div>
         </div>
 
-        <h2 style="margin-top:32px;">Organizer Details</h2>
-
-        <div class="field">
-          <label>Organizer (optional)</label>
-          <select id="fOrganizerSelect">
-            <option value="">Select Some Options</option>
-          </select>
-          <div class="organizer-note">If it doesn't show organizer(s). Manage your organizer(s) from here but it should also have a virtual option or in-person option.</div>
-        </div>
-
-        <div class="field">
-          <label>Event Type</label>
-          <div class="radio-group">
-            <label><input type="radio" name="eventType" value="virtual" checked> Virtual</label>
-            <label><input type="radio" name="eventType" value="in-person"> In-Person</label>
-            <label><input type="radio" name="eventType" value="both"> Both</label>
-          </div>
-        </div>
-
         <div class="form-actions">
           <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-pen"></i> Update Event</button>
           <a href="admin_dashboard.html" class="btn-cancel">Cancel</a>
@@ -299,6 +372,19 @@
       </form>
     </div>
   </section>
+
+  <div class="custom-modal-overlay" id="appModal">
+    <div class="custom-modal">
+      <div class="custom-modal-header">
+        <div class="cm-icon info" id="modalIcon"><i class="fas fa-info-circle"></i></div>
+        <span class="custom-modal-title" id="modalTitle">Title</span>
+      </div>
+      <div class="custom-modal-body" id="modalBody">Message</div>
+      <div class="custom-modal-footer" id="modalFooter">
+        <button class="cm-btn primary modal-close-btn">OK</button>
+      </div>
+    </div>
+  </div>
 
   <footer class="footer">
     <div class="container">
@@ -315,12 +401,19 @@
           </ul>
         </div>
         <div class="footer-col">
-          <h4>Support</h4>
+          <h4>About</h4>
           <ul>
-            <li><a href="#">How It Works</a></li>
-            <li><a href="#">Terms & Conditions</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">FAQ</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="terms.html">Terms & Conditions</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
           </ul>
         </div>
       </div>
@@ -329,8 +422,7 @@
         <div class="footer-social">
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
           <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          
         </div>
       </div>
     </div>
@@ -342,7 +434,7 @@
       try {
         var { data: { user }, error } = await window.supabase.auth.getUser();
         if (error || !user) { window.location.href = 'events.html'; return; }
-        const { data: role } = await supabase.rpc('get_my_role');
+        const { data: role } = await window.supabase.rpc('get_my_role');
         if (role !== 'admin') { window.location.href = 'events.html'; return; }
         document.querySelectorAll('.admin-only').forEach(function (el) { el.style.display = 'block'; });
       } catch (_) { window.location.href = 'events.html'; }
@@ -351,8 +443,73 @@
       var eventId = params.get('id');
       if (!eventId) { window.location.href = 'admin_dashboard.html'; return; }
 
+      // ─── Modal helpers ───
+      var modal = document.getElementById('appModal');
+      var modalIcon = document.getElementById('modalIcon');
+      var modalTitle = document.getElementById('modalTitle');
+      var modalBody = document.getElementById('modalBody');
+      var modalFooter = document.getElementById('modalFooter');
+
+      function showAlert(title, msg, type) {
+        type = type || 'info';
+        modalIcon.className = 'cm-icon ' + type;
+        var iconMap = { info: 'fa-info-circle', success: 'fa-check-circle', warn: 'fa-exclamation-triangle', error: 'fa-times-circle', confirm: 'fa-question-circle' };
+        modalIcon.innerHTML = '<i class="fas ' + (iconMap[type] || 'fa-info-circle') + '"></i>';
+        modalTitle.textContent = title;
+        modalBody.textContent = msg;
+        modalFooter.innerHTML = '<button class="cm-btn primary modal-close-btn">OK</button>';
+        modal.classList.add('open');
+        return new Promise(function (resolve) {
+          function close() { modal.classList.remove('open'); resolve(); cleanup(); }
+          function handler(e) { if (e.target === modal) close(); }
+          modal.querySelector('.modal-close-btn').addEventListener('click', close);
+          modal.addEventListener('click', handler);
+          function cleanup() { modal.removeEventListener('click', handler); }
+        });
+      }
+
+      function showConfirm(title, msg) {
+        return new Promise(function (resolve) {
+          modalIcon.className = 'cm-icon confirm';
+          modalIcon.innerHTML = '<i class="fas fa-question-circle"></i>';
+          modalTitle.textContent = title;
+          modalBody.textContent = msg;
+          modalFooter.innerHTML = '<button class="cm-btn secondary" id="confirmNo">Cancel</button><button class="cm-btn danger" id="confirmYes">Yes, delete</button>';
+          modal.classList.add('open');
+          function close() { modal.classList.remove('open'); }
+          document.getElementById('confirmNo').addEventListener('click', function () { close(); resolve(false); });
+          document.getElementById('confirmYes').addEventListener('click', function () { close(); resolve(true); });
+          modal.addEventListener('click', function (e) { if (e.target === modal) { close(); resolve(false); } });
+        });
+      }
+
+      // ─── Event Type Cards ───
+      var typeCards = document.querySelectorAll('.event-type-card');
+      var locationField = document.getElementById('locationField');
+      var timingFields = document.getElementById('timingFields');
+
+      function updateEventType(value) {
+        typeCards.forEach(function (c) { c.classList.toggle('active', c.dataset.value === value); });
+        if (value === 'virtual') {
+          locationField.classList.add('hidden');
+          timingFields.classList.add('hidden');
+        } else {
+          locationField.classList.remove('hidden');
+          timingFields.classList.remove('hidden');
+        }
+      }
+
+      typeCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+          var radio = this.querySelector('input[type="radio"]');
+          radio.checked = true;
+          updateEventType(radio.value);
+        });
+      });
+
+      // ─── Load event data ───
       var { data: ev, error: evErr } = await window.supabase.from('events').select('*').eq('id', eventId).maybeSingle();
-      if (evErr || !ev) { alert('Event not found.'); window.location.href = 'admin_dashboard.html'; return; }
+      if (evErr || !ev) { await showAlert('Not Found', 'Event not found.', 'error'); window.location.href = 'admin_dashboard.html'; return; }
 
       // Pre-fill form fields
       document.getElementById('fTitle').value = ev.title || '';
@@ -372,10 +529,11 @@
       document.getElementById('fRecurrence').value = ev.recurrence || '';
       document.getElementById('fCert').checked = !!ev.enable_certification;
 
-      if (ev.event_type) {
-        var radio = document.querySelector('input[name="eventType"][value="' + ev.event_type + '"]');
-        if (radio) radio.checked = true;
-      }
+      // Set event type
+      var eventType = ev.event_type || 'virtual';
+      var targetRadio = document.querySelector('input[name="eventType"][value="' + eventType + '"]');
+      if (targetRadio) targetRadio.checked = true;
+      updateEventType(eventType);
 
       // Show existing banner
       if (ev.banner_url) {
@@ -404,6 +562,7 @@
         reader.readAsDataURL(file);
       });
 
+      // ─── Submit ───
       document.getElementById('editEventForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         var btn = document.getElementById('submitBtn');
@@ -411,11 +570,31 @@
         btn.textContent = 'Updating...';
 
         try {
+          var eventType = document.querySelector('input[name="eventType"]:checked').value;
+
+          var title = document.getElementById('fTitle').value.trim();
+          var organizer = document.getElementById('fOrganizer').value.trim();
+          var category = document.getElementById('fCategory').value;
+          var country = document.getElementById('fCountry').value;
+          var description = document.getElementById('fDescription').value.trim();
+          var regEmail = document.getElementById('fRegEmail').value.trim();
+
+          if (!title) { await showAlert('Missing Field', 'Event title is required.', 'warn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+          if (!organizer) { await showAlert('Missing Field', 'Organizer name is required.', 'warn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+          if (eventType !== 'virtual') {
+            var location = document.getElementById('fLocation').value.trim();
+            if (!location) { await showAlert('Missing Field', 'Location is required for in-person events.', 'warn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+          }
+          if (!category) { await showAlert('Missing Field', 'Category is required.', 'warn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+          if (!country) { await showAlert('Missing Field', 'Country is required.', 'warn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+          if (!description) { await showAlert('Missing Field', 'Description is required.', 'warn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+          if (!regEmail) { await showAlert('Missing Field', 'Registration email/URL is required.', 'warn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+
           var bannerUrl = ev.banner_url || '';
           if (newBannerFile) {
             var filePath = 'event-banners/' + Date.now() + '_' + newBannerFile.name;
             var { error: upErr } = await window.supabase.storage.from('event-banners').upload(filePath, newBannerFile, { upsert: true });
-            if (upErr) { alert('Banner upload failed: ' + upErr.message); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+            if (upErr) { await showAlert('Upload Error', 'Banner upload failed: ' + upErr.message, 'error'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
             var { data: pubData } = window.supabase.storage.from('event-banners').getPublicUrl(filePath);
             bannerUrl = pubData.publicUrl;
           }
@@ -424,51 +603,36 @@
           var tagsArr = tags ? tags.split(',').slice(0, 2).map(function (t) { return t.trim(); }) : [];
 
           var formData = {
-            title: document.getElementById('fTitle').value.trim(),
-            organizer_name: document.getElementById('fOrganizer').value.trim(),
-            location: document.getElementById('fLocation').value.trim(),
-            category: document.getElementById('fCategory').value,
-            event_type: document.querySelector('input[name="eventType"]:checked').value,
+            title: title,
+            organizer_name: organizer,
+            location: eventType !== 'virtual' ? document.getElementById('fLocation').value.trim() : '',
+            category: category,
+            event_type: eventType,
             price: parseFloat(document.getElementById('fPrice').value) || 0.00,
             tags: tagsArr,
-            country: document.getElementById('fCountry').value,
+            country: country,
             banner_url: bannerUrl,
-            description: document.getElementById('fDescription').value.trim(),
-            registration_email_url: document.getElementById('fRegEmail').value.trim(),
+            description: description,
+            registration_email_url: regEmail,
             video_url: document.getElementById('fVideoUrl').value.trim(),
-            start_date: document.getElementById('fStartDate').value,
-            start_time: document.getElementById('fStartTime').value,
-            end_date: document.getElementById('fEndDate').value || null,
-            end_time: document.getElementById('fEndTime').value || null,
+            start_date: eventType !== 'virtual' ? document.getElementById('fStartDate').value : null,
+            start_time: eventType !== 'virtual' ? document.getElementById('fStartTime').value : null,
+            end_date: eventType !== 'virtual' ? (document.getElementById('fEndDate').value || null) : null,
+            end_time: eventType !== 'virtual' ? (document.getElementById('fEndTime').value || null) : null,
             recurrence: document.getElementById('fRecurrence').value,
             enable_certification: document.getElementById('fCert').checked
           };
 
           var { error: updErr } = await window.supabase.from('events').update(formData).eq('id', eventId);
-          if (updErr) { alert('Error: ' + updErr.message); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
+          if (updErr) { await showAlert('Database Error', updErr.message, 'error'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-pen"></i> Update Event'; return; }
 
-          alert('Event "' + formData.title + '" updated successfully!');
+          await showAlert('Success', 'Event "' + formData.title + '" updated successfully!', 'success');
           window.location.href = 'admin_dashboard.html';
         } catch (err) {
-          alert('Unexpected error: ' + err.message);
+          await showAlert('Error', 'Unexpected error: ' + err.message, 'error');
           btn.disabled = false;
           btn.innerHTML = '<i class="fas fa-pen"></i> Update Event';
         }
-      });
-    })();
-
-    // Load organizers into dropdown
-    (async function() {
-      const sel = document.getElementById('fOrganizerSelect');
-      if (!sel) return;
-      const { data: orgs } = await window.supabase.from('events').select('organizer_name').not('organizer_name', 'is', null);
-      if (orgs && orgs.length > 0) {
-        const names = [...new Set(orgs.map(o => o.organizer_name))].sort();
-        sel.innerHTML = '<option value="">Select organizer...</option>' +
-          names.map(n => '<option value="' + n.replace(/'/g, "&apos;") + '">' + n + '</option>').join('');
-      }
-      sel.addEventListener('change', function() {
-        document.getElementById('fOrganizer').value = this.value;
       });
     })();
   </script>

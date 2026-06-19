@@ -507,12 +507,19 @@
           </ul>
         </div>
         <div class="footer-col">
-          <h4>Support</h4>
+          <h4>About</h4>
           <ul>
-            <li><a href="#">How It Works</a></li>
-            <li><a href="#">Terms & Conditions</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">FAQ</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="terms.html">Terms & Conditions</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
           </ul>
         </div>
       </div>
@@ -521,8 +528,7 @@
         <div class="footer-social">
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
           <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          
         </div>
       </div>
     </div>
@@ -729,7 +735,17 @@
         searchInput.addEventListener('input', applyFilters);
       }
       var searchType = document.querySelector('.search-type');
-      if (searchType) searchType.addEventListener('change', applyFilters);
+      if (searchType) {
+        searchType.addEventListener('change', function () {
+          var input = document.querySelector('.search-bar input');
+          if (this.value === 'event') {
+            input.placeholder = "Enter an event name";
+          } else {
+            input.placeholder = "Enter an athlete's name";
+          }
+          applyFilters();
+        });
+      }
 
       document.querySelectorAll('.sort-link').forEach(function (link) {
         link.addEventListener('click', function (e) {

@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rise & Run TT – Trinidad & Tobago Road Races</title>
-  <meta name="description" content="Discover road races and running events across Trinidad and Tobago. Find your next 5K, 10K, or marathon with Rise & Run TT.">
+  <title>About Us – Rise & Run TT</title>
+  <meta name="description" content="About Rise & Run TT – Trinidad and Tobago's road racing community.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a0000">
+  <style>
+    .page-section { padding: 60px 0; }
+    .page-card { max-width: 720px; margin: 0 auto; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px 32px; }
+    .page-card h1 { font-size: 1.6rem; font-weight: 900; color: var(--primary); margin-bottom: 20px; }
+    .page-card p { color: var(--gray); line-height: 1.7; margin-bottom: 16px; }
+  </style>
 </head>
 <body>
-
   <header class="header">
     <div class="container header-inner">
       <a href="index.html" class="logo">
-        <img src="images/logo.jpg" alt="Rise & Run TT" class="logo-img">
-        Rise & Run TT
+        <img src="images/logo.jpg" alt="Rise & Run TT" class="logo-img"> Rise & Run TT
       </a>
-      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
-        <i class="fas fa-bars"></i>
-      </button>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
       <nav class="nav" id="mainNav">
-        <a href="index.html" class="active">Home</a>
+        <a href="index.html">Home</a>
         <a href="events.html">Events & Results</a>
         <a href="leaderboard.html">Leaderboard</a>
         <a href="login.html" id="navLogin">Login</a>
@@ -38,70 +40,37 @@
     </div>
   </header>
 
-  <section class="hero-slider" id="heroSlider">
-    <div id="heroSlidesContainer"></div>
-
-    <button class="slider-arrow prev" id="sliderPrev"><i class="fas fa-chevron-left"></i></button>
-    <button class="slider-arrow next" id="sliderNext"><i class="fas fa-chevron-right"></i></button>
-    <div class="slider-dots" id="sliderDots"></div>
-  </section>
-
-  <section class="section">
+  <section class="page-section">
     <div class="container">
-      <div class="section-header">
-        <h2>Categories</h2>
+      <div class="page-card">
+        <h1><i class="fas fa-info-circle" style="color:var(--accent-red);margin-right:8px;"></i> About Us</h1>
+        <p>Rise & Run TT is Trinidad and Tobago's premier platform for road races and running events. We connect runners of all levels with races across the country — from 5K fun runs to full marathons.</p>
+        <p>Our mission is to make it easy to discover, register for, and track your performance in local running events. Whether you're a seasoned athlete or lacing up for the first time, Rise & Run TT is your home for the road racing community.</p>
+        <p>Founded in 2026, we're a small team passionate about running and building tools that bring runners together.</p>
       </div>
-      <div class="categories-scroll">
-        <a href="events.html" class="category-card">
-          <img src="images/road%20races.jpg" alt="Road Races" class="category-img">
-          <span>Road Races</span>
-        </a>
-        <a href="events.html" class="category-card">
-          <img src="https://images.unsplash.com/photo-1461896836934-bd45ba8fcf9b?w=260&h=260&fit=crop" alt="Virtual Races" class="category-img">
-          <span>Virtual Races</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" style="background: var(--light-gray);">
-    <div class="container">
-      <div class="section-header">
-        <h2>Upcoming Races</h2>
-        <a href="events.html" class="view-all">View All Events &rarr;</a>
-      </div>
-      <div class="event-grid" id="dynamicEventGrid"></div>
     </div>
   </section>
 
   <footer class="footer">
     <div class="container">
       <div class="footer-inner">
-        <div class="footer-brand">
-          <h3>Rise & Run TT</h3>
-        </div>
+        <div class="footer-brand"><h3>Rise & Run TT</h3></div>
         <div class="footer-col">
           <h4>Quick Links</h4>
           <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="events.html">Events & Results</a></li>
             <li><a href="leaderboard.html">Leaderboard</a></li>
-            <li><a href="login.html">Login</a></li>
-            <li><a href="signup.html">Sign Up</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
           </ul>
         </div>
         <div class="footer-col">
-          <h4>About</h4>
+          <h4>Support</h4>
           <ul>
             <li><a href="about.html">About Us</a></li>
             <li><a href="contact.html">Contact</a></li>
-            <li><a href="how-it-works.html">How It Works</a></li>
             <li><a href="faq.html">FAQ</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h4>Legal</h4>
-          <ul>
+            <li><a href="how-it-works.html">How It Works</a></li>
             <li><a href="terms.html">Terms & Conditions</a></li>
             <li><a href="privacy.html">Privacy Policy</a></li>
           </ul>
@@ -110,9 +79,7 @@
       <div class="footer-bottom">
         <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
         <div class="footer-social">
-          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
           <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          
         </div>
       </div>
     </div>

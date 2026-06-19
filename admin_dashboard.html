@@ -108,6 +108,45 @@
       position: absolute; top: 20px; right: 30px; color: white; font-size: 2rem; cursor: pointer; background: none; border: none;
     }
 
+    /* ─── Custom Modal ─── */
+    .custom-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.55); align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .custom-modal-overlay.open { display: flex; }
+    .custom-modal {
+      background: var(--white); border-radius: 16px; max-width: 420px;
+      width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .custom-modal-header {
+      padding: 20px 24px 0; display: flex; align-items: center; gap: 12px;
+    }
+    .custom-modal-header .cm-icon {
+      width: 40px; height: 40px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+    }
+    .custom-modal-header .cm-icon.info { background: #e8f4fd; color: #0a7abf; }
+    .custom-modal-header .cm-icon.success { background: #e6f9ed; color: #148a3b; }
+    .custom-modal-header .cm-icon.warn { background: #fff3e0; color: #c67600; }
+    .custom-modal-header .cm-icon.error { background: #ffe8e8; color: #c00; }
+    .custom-modal-header .cm-icon.confirm { background: #fff3e0; color: #c67600; }
+    .custom-modal-title { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+    .custom-modal-body { padding: 12px 24px 20px; font-size: 0.9rem; color: var(--gray); line-height: 1.5; }
+    .custom-modal-footer { padding: 0 24px 20px; display: flex; gap: 10px; justify-content: flex-end; }
+    .custom-modal-footer .cm-btn {
+      padding: 10px 24px; border-radius: var(--radius-full); font-weight: 600;
+      font-size: 0.85rem; border: none; cursor: pointer; transition: var(--transition);
+    }
+    .custom-modal-footer .cm-btn.primary { background: var(--accent-red); color: var(--white); }
+    .custom-modal-footer .cm-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(204,0,0,0.3); }
+    .custom-modal-footer .cm-btn.secondary { background: var(--light-gray); color: var(--gray); }
+    .custom-modal-footer .cm-btn.secondary:hover { background: #ddd; }
+    .custom-modal-footer .cm-btn.danger { background: var(--accent-red); color: var(--white); }
+    .custom-modal-footer .cm-btn.danger:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(204,0,0,0.3); }
+
     @media (max-width: 768px) {
       .admin-hero h1 { font-size: 1.3rem; }
       .event-admin-card .eac-header { flex-direction: column; align-items: stretch; }
@@ -166,6 +205,19 @@
     <img id="proofPreviewImg" src="" alt="Proof preview">
   </div>
 
+  <div class="custom-modal-overlay" id="appModal">
+    <div class="custom-modal">
+      <div class="custom-modal-header">
+        <div class="cm-icon info" id="modalIcon"><i class="fas fa-info-circle"></i></div>
+        <span class="custom-modal-title" id="modalTitle">Title</span>
+      </div>
+      <div class="custom-modal-body" id="modalBody">Message</div>
+      <div class="custom-modal-footer" id="modalFooter">
+        <button class="cm-btn primary modal-close-btn">OK</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div class="container">
       <div class="footer-inner">
@@ -182,12 +234,19 @@
           </ul>
         </div>
         <div class="footer-col">
-          <h4>Support</h4>
+          <h4>About</h4>
           <ul>
-            <li><a href="#">How It Works</a></li>
-            <li><a href="#">Terms & Conditions</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">FAQ</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="terms.html">Terms & Conditions</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
           </ul>
         </div>
       </div>
@@ -196,8 +255,7 @@
         <div class="footer-social">
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
           <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          
         </div>
       </div>
     </div>
@@ -212,7 +270,7 @@
       if (!userData || !userData.id) { window.location.href = 'events.html'; return; }
       var { data: { user }, error: userErr } = await window.supabase.auth.getUser();
       if (userErr || !user) { window.location.href = 'events.html'; return; }
-      var { data: role } = await supabase.rpc('get_my_role');
+      var { data: role } = await window.supabase.rpc('get_my_role');
       if (role !== 'admin') { window.location.href = 'events.html'; return; }
       document.querySelectorAll('.admin-only').forEach(function (el) { el.style.display = 'block'; });
       document.getElementById('navLogin').style.display = 'none';
@@ -224,6 +282,46 @@
       var proofImg = document.getElementById('proofPreviewImg');
       document.getElementById('proofModalClose').addEventListener('click', function () { proofModal.classList.remove('open'); });
       proofModal.addEventListener('click', function (e) { if (e.target === proofModal) proofModal.classList.remove('open'); });
+
+      // ─── Custom modal helpers ───
+      var appModal = document.getElementById('appModal');
+      var modalIcon = document.getElementById('modalIcon');
+      var modalTitle = document.getElementById('modalTitle');
+      var modalBody = document.getElementById('modalBody');
+      var modalFooter = document.getElementById('modalFooter');
+
+      function showAlert(title, msg, type) {
+        type = type || 'info';
+        modalIcon.className = 'cm-icon ' + type;
+        var iconMap = { info: 'fa-info-circle', success: 'fa-check-circle', warn: 'fa-exclamation-triangle', error: 'fa-times-circle', confirm: 'fa-question-circle' };
+        modalIcon.innerHTML = '<i class="fas ' + (iconMap[type] || 'fa-info-circle') + '"></i>';
+        modalTitle.textContent = title;
+        modalBody.textContent = msg;
+        modalFooter.innerHTML = '<button class="cm-btn primary modal-close-btn">OK</button>';
+        appModal.classList.add('open');
+        return new Promise(function (resolve) {
+          function close() { appModal.classList.remove('open'); resolve(); cleanup(); }
+          function handler(e) { if (e.target === appModal) close(); }
+          appModal.querySelector('.modal-close-btn').addEventListener('click', close);
+          appModal.addEventListener('click', handler);
+          function cleanup() { appModal.removeEventListener('click', handler); }
+        });
+      }
+
+      function showConfirm(title, msg) {
+        return new Promise(function (resolve) {
+          modalIcon.className = 'cm-icon confirm';
+          modalIcon.innerHTML = '<i class="fas fa-question-circle"></i>';
+          modalTitle.textContent = title;
+          modalBody.textContent = msg;
+          modalFooter.innerHTML = '<button class="cm-btn secondary" id="confirmNo">Cancel</button><button class="cm-btn danger" id="confirmYes">Yes, delete</button>';
+          appModal.classList.add('open');
+          function close() { appModal.classList.remove('open'); }
+          document.getElementById('confirmNo').addEventListener('click', function () { close(); resolve(false); });
+          document.getElementById('confirmYes').addEventListener('click', function () { close(); resolve(true); });
+          appModal.addEventListener('click', function (e) { if (e.target === appModal) { close(); resolve(false); } });
+        });
+      }
 
       // ─── Load events + aggregate counts ───
       var container = document.getElementById('eventsContainer');
@@ -318,11 +416,12 @@
       // ─── Delete event ───
       container.querySelectorAll('.eac-delete-event').forEach(function (btn) {
         btn.addEventListener('click', async function () {
-          if (!confirm('Delete this event permanently? This cannot be undone.')) return;
+          var confirmed = await showConfirm('Delete Event', 'Delete this event permanently? This cannot be undone.');
+          if (!confirmed) return;
           var card = this.closest('.event-admin-card');
           var eventId = card.dataset.eventId;
           var { error: delErr } = await window.supabase.from('events').delete().eq('id', eventId);
-          if (delErr) { alert('Delete failed: ' + delErr.message); return; }
+          if (delErr) { await showAlert('Delete Failed', delErr.message, 'error'); return; }
           card.remove();
           if (!container.querySelector('.event-admin-card')) {
             container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-plus"></i><p>No events yet.</p></div>';
@@ -376,7 +475,7 @@
             var regId = this.dataset.regId;
             this.disabled = true;
             var { error } = await window.supabase.from('registrations').update({ proof_status: 'Approved' }).eq('id', regId);
-            if (error) { alert('Failed to approve: ' + error.message); this.disabled = false; return; }
+            if (error) { await showAlert('Approve Failed', error.message, 'error'); this.disabled = false; return; }
             updateRowStatus(this, regId, 'Approved');
           });
         });
@@ -385,7 +484,7 @@
             var regId = this.dataset.regId;
             this.disabled = true;
             var { error } = await window.supabase.from('registrations').update({ proof_status: 'Rejected' }).eq('id', regId);
-            if (error) { alert('Failed to reject: ' + error.message); this.disabled = false; return; }
+            if (error) { await showAlert('Reject Failed', error.message, 'error'); this.disabled = false; return; }
             updateRowStatus(this, regId, 'Rejected');
           });
         });
