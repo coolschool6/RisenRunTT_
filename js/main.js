@@ -1,7 +1,6 @@
 // Supabase setup
 const supabaseUrl = "https://yfyopxzdvyntjnocnzpi.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmeW9weHpkdnludGpub2NuenBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0MTQ2MDYsImV4cCI6MjA5Njk5MDYwNn0.-p-k2H9AbOIW7_Ka5ZpybfFiCpImGMkl4dHIiuuEQFw";
-const STRAVA_CLIENT_ID = ''; // Set this when you register your Strava app
 const _supabaseCreateClient = window.supabase.createClient;
 window.supabase = _supabaseCreateClient(supabaseUrl, supabaseKey);
 window.currentUserRole = null;
@@ -227,6 +226,15 @@ document.addEventListener('DOMContentLoaded', () => {
       filtered.sort(function (a, b) {
         if (!a.start_date) return 1; if (!b.start_date) return -1;
         return a.start_date > b.start_date ? -1 : a.start_date < b.start_date ? 1 : 0;
+      });
+    } else if (sort === 'recommended') {
+      filtered.sort(function (a, b) {
+        var aWeight = (a.category === 'In-Person' || a.category === 'Both' ? 2 : 0);
+        var bWeight = (b.category === 'In-Person' || b.category === 'Both' ? 2 : 0);
+        if (!a.start_date) return 1; if (!b.start_date) return -1;
+        aWeight += a.start_date > new Date().toISOString().slice(0,10) ? 1 : 0;
+        bWeight += b.start_date > new Date().toISOString().slice(0,10) ? 1 : 0;
+        return bWeight - aWeight;
       });
     }
 

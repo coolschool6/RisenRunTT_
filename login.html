@@ -150,6 +150,10 @@
           <label>Password <span class="required">*</span></label>
           <input type="password" id="password" placeholder="Enter your password" required>
         </div>
+        <div class="forgot-row">
+          <label><input type="checkbox" id="rememberMe"> Remember me</label>
+          <a href="#" title="Coming soon">Forgot password?</a>
+        </div>
         <button class="auth-btn" id="loginBtn" type="submit"><i class="fas fa-sign-in-alt"></i> Log In</button>
 
         <p class="auth-footer-text">Don't have an account? <a href="signup.html">Sign up</a></p>
@@ -187,7 +191,7 @@
         <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
         <div class="footer-social">
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
           <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
           <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
         </div>
@@ -239,6 +243,15 @@
     document.addEventListener('DOMContentLoaded', function() {
       const supabase = window.supabase;
       var loginForm = document.querySelector('form') || document.getElementById('loginForm');
+      var rememberCheck = document.getElementById('rememberMe');
+
+      // Auto-fill email if remembered
+      var rememberedEmail = localStorage.getItem('rr_remember_email');
+      if (rememberedEmail) {
+        var emailField = document.querySelector('input[type="email"]');
+        if (emailField) emailField.value = rememberedEmail;
+        if (rememberCheck) rememberCheck.checked = true;
+      }
 
       if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
@@ -252,6 +265,13 @@
 
           var email = emailInput.value.trim();
           var password = passwordInput.value.trim();
+
+          // Handle remember me
+          if (rememberCheck && rememberCheck.checked) {
+            localStorage.setItem('rr_remember_email', email);
+          } else {
+            localStorage.removeItem('rr_remember_email');
+          }
 
           if (submitBtn) submitBtn.textContent = "Logging you in...";
 

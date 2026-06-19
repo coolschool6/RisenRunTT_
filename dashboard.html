@@ -62,13 +62,11 @@
     }
     .proof-box .proof-label { font-size: 0.78rem; font-weight: 600; color: var(--gray); margin-bottom: 8px; }
     .proof-box .proof-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn-strava, .btn-upload {
+    .btn-upload {
       padding: 7px 14px; border-radius: var(--radius-full); font-size: 0.8rem;
       font-weight: 600; cursor: pointer; transition: var(--transition); border: none;
+      background: var(--accent-red); color: white;
     }
-    .btn-strava { background: #fc4c02; color: white; }
-    .btn-strava:hover { background: #e04402; transform: translateY(-1px); }
-    .btn-upload { background: var(--accent-red); color: white; }
     .btn-upload:hover { background: #aa0000; transform: translateY(-1px); }
     .proof-file-input { display: none; }
     .proof-upload-status { font-size: 0.78rem; margin-top: 6px; color: var(--gray); }
@@ -119,7 +117,6 @@
       <h1>Welcome, <span id="dashUserName">Athlete</span></h1>
       <p>Your virtual race hub — track registrations, submit proof, and conquer the leaderboard.</p>
       <div class="dash-meta">
-        <span id="stravaStatus" style="font-size:0.82rem;opacity:0.8;"><i class="fab fa-strava" style="color:#fc4c02;"></i> <span id="stravaStatusText">Checking...</span> <button id="stravaToggleBtn" style="display:none;padding:3px 10px;border-radius:var(--radius-full);border:1px solid rgba(255,255,255,0.3);background:transparent;color:var(--white);font-size:0.75rem;cursor:pointer;margin-left:6px;"></button></span>
         <a href="profile.html" class="btn-profile"><i class="fas fa-user"></i> My Profile</a>
         <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Log Out</button>
       </div>
@@ -167,7 +164,7 @@
         <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
         <div class="footer-social">
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
           <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
           <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
         </div>
@@ -236,7 +233,6 @@
             '<div class="proof-box">' +
               '<div class="proof-label">Submit Activity Proof</div>' +
               '<div class="proof-actions">' +
-                '<button class="btn-strava btn-strava-sync" data-reg-id="' + r.id + '"><i class="fab fa-strava"></i> Sync with Strava</button>' +
                 '<button class="btn-upload btn-manual-upload" data-reg-id="' + r.id + '"><i class="fas fa-upload"></i> Upload Screenshot</button>' +
               '</div>' +
               '<input type="file" accept="image/*" class="proof-file-input" data-reg-id="' + r.id + '">' +
@@ -245,21 +241,6 @@
           '</div>' +
         '</div>';
       }).join('') + '</div>';
-
-      // Strava sync buttons
-      document.querySelectorAll('.btn-strava-sync').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          const regId = this.dataset.regId;
-          const statusEl = document.getElementById('uploadStatus_' + regId);
-          if (!STRAVA_CLIENT_ID) {
-            statusEl.innerHTML = '<span style="color:var(--gray);">Strava sync coming soon — stay tuned!</span>';
-            return;
-          }
-          statusEl.innerHTML = '<span style="color:#fc4c02;"><i class="fas fa-spinner fa-pulse"></i> Connecting to Strava...</span>';
-          // In production, redirect to Strava OAuth:
-          // window.location.href = 'https://www.strava.com/oauth/authorize?client_id=' + STRAVA_CLIENT_ID + '&redirect_uri=' + window.location.origin + '/strava-callback.html&response_type=code&scope=activity:read';
-        });
-      });
 
       // Manual upload listeners
       document.querySelectorAll('.btn-manual-upload').forEach(function (btn) {
@@ -291,30 +272,6 @@
 
           statusEl.innerHTML = '<span style="color:green;">&#10003; Proof submitted. Status set to Pending Admin Review.</span>';
         });
-      });
-    })();
-  </script>
-  <script>
-    // ─── Strava connection ───
-    (async function () {
-      let userData;
-      try { userData = JSON.parse(localStorage.getItem('rr_user')); } catch (_) {}
-      if (!userData || !userData.id) return;
-
-      const { data: profile } = await window.supabase.from('profiles').select('strava_connected').eq('id', userData.id).maybeSingle();
-      const connected = profile && profile.strava_connected;
-
-      document.getElementById('stravaStatusText').textContent = connected ? 'Connected \u2714' : 'Not Connected';
-      const btn = document.getElementById('stravaToggleBtn');
-      btn.style.display = 'inline-block';
-      btn.textContent = connected ? 'Disconnect' : 'Connect';
-      btn.addEventListener('click', async function () {
-        const newVal = !connected;
-        const { error } = await window.supabase.from('profiles').update({ strava_connected: newVal }).eq('id', userData.id);
-        if (error) { alert('Failed to update Strava connection.'); return; }
-        connected = newVal;
-        document.getElementById('stravaStatusText').textContent = connected ? 'Connected \u2714' : 'Not Connected';
-        btn.textContent = connected ? 'Disconnect' : 'Connect';
       });
     })();
   </script>

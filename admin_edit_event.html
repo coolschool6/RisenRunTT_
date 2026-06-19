@@ -328,7 +328,7 @@
         <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
         <div class="footer-social">
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
           <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
           <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
         </div>
@@ -454,6 +454,21 @@
           btn.disabled = false;
           btn.innerHTML = '<i class="fas fa-pen"></i> Update Event';
         }
+      });
+    })();
+
+    // Load organizers into dropdown
+    (async function() {
+      const sel = document.getElementById('fOrganizerSelect');
+      if (!sel) return;
+      const { data: orgs } = await window.supabase.from('events').select('organizer_name').not('organizer_name', 'is', null);
+      if (orgs && orgs.length > 0) {
+        const names = [...new Set(orgs.map(o => o.organizer_name))].sort();
+        sel.innerHTML = '<option value="">Select organizer...</option>' +
+          names.map(n => '<option value="' + n.replace(/'/g, "&apos;") + '">' + n + '</option>').join('');
+      }
+      sel.addEventListener('change', function() {
+        document.getElementById('fOrganizer').value = this.value;
       });
     })();
   </script>

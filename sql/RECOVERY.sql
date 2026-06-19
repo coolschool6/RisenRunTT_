@@ -7,8 +7,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name text NOT NULL,
   email text NOT NULL,
   role text DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-  strava_athlete_id text DEFAULT '',
-  strava_connected boolean DEFAULT FALSE,
   created_at timestamp DEFAULT now()
 );
 

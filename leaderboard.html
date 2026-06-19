@@ -124,7 +124,7 @@
         <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
         <div class="footer-social">
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
           <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
         </div>
       </div>
@@ -137,7 +137,10 @@
       const eventSelect = document.getElementById('eventSelect');
       const container = document.getElementById('leaderboardContainer');
 
-      // Load events that have results
+      let currentUser;
+      try { const { data: { user } } = await window.supabase.auth.getUser(); currentUser = user; } catch (_) {}
+
+      // Load events
       const { data: events } = await window.supabase.from('events').select('id, title').order('start_date', { ascending: false });
       if (!events || events.length === 0) {
         eventSelect.innerHTML = '<option value="">No events available</option>';
@@ -153,28 +156,42 @@
 
         container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>Loading results...</p></div>';
 
-        const { data: results } = await window.supabase
-          .from('results')
-          .select('*')
+        // Query registrations with approved proofs, joined with profiles for names
+        const { data: regs } = await window.supabase
+          .from('registrations')
+          .select('id, user_id, finish_time, screenshot_url, proof_verified_at, user_id')
           .eq('event_id', eventId)
-          .eq('proof_status', 'approved')
-          .order('position', { ascending: true });
+          .eq('proof_status', 'Approved')
+          .not('screenshot_url', 'is', null)
+          .not('screenshot_url', 'eq', '')
+          .order('proof_verified_at', { ascending: true, nullsLast: true });
 
-        if (!results || results.length === 0) {
+        if (!regs || regs.length === 0) {
           container.innerHTML = '<div class="empty-state"><i class="fas fa-hourglass"></i><p>No results published yet for this event.</p></div>';
           return;
         }
 
+        // Fetch profiles for each registration
+        const userIds = regs.filter(r => r.user_id).map(r => r.user_id);
+        let profiles = {};
+        if (userIds.length > 0) {
+          const { data: profs } = await window.supabase.from('profiles').select('id, full_name').in('id', userIds);
+          if (profs) profs.forEach(p => profiles[p.id] = p.full_name);
+        }
+
         container.innerHTML =
           '<div class="lb-table-wrap"><table class="lb-table">' +
-          '<thead><tr><th>#</th><th>Name</th><th>Time</th><th>Distance</th></tr></thead><tbody>' +
-          results.map(function (r, i) {
+          '<thead><tr><th>#</th><th>Name</th><th>Finish Time</th>' + (window.currentUserRole === 'admin' ? '<th>Proof</th>' : '') + '</tr></thead><tbody>' +
+          regs.map(function (r, i) {
             const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
+            const runnerName = profiles[r.user_id] || 'Runner';
+            const canViewProof = window.currentUserRole === 'admin' || (currentUser && r.user_id === currentUser.id);
+            const proofCell = canViewProof ? '<td><a href="' + r.screenshot_url + '" target="_blank" style="color:var(--accent-red);font-weight:600;">View Proof</a></td>' : '';
             return '<tr>' +
-              '<td><span class="rank ' + rankClass + '">' + r.position + '</span></td>' +
-              '<td><strong>' + r.full_name + '</strong></td>' +
-              '<td>' + r.time_formatted + '</td>' +
-              '<td>' + r.distance + '</td>' +
+              '<td><span class="rank ' + rankClass + '">' + (i + 1) + '</span></td>' +
+              '<td><strong>' + runnerName + '</strong></td>' +
+              '<td>' + (r.finish_time || '—') + '</td>' +
+              proofCell +
             '</tr>';
           }).join('') +
           '</tbody></table></div>';

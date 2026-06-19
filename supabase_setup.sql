@@ -8,8 +8,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name text NOT NULL,
   email text NOT NULL,
   role text DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-  strava_athlete_id text DEFAULT '',
-  strava_connected boolean DEFAULT FALSE,
   created_at timestamp DEFAULT now()
 );
 
@@ -25,7 +23,7 @@ CREATE POLICY "Admin all profiles" ON public.profiles
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
--- Allow users to update their own profile (needed for Strava toggle, etc.)
+-- Allow users to update their own profile
 CREATE POLICY "Users update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
@@ -126,9 +124,6 @@ CREATE POLICY "Admin all registrations" ON public.registrations
 -- ============================================================
 -- MIGRATION: Add columns if table already exists (safe to run again)
 -- ============================================================
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS strava_athlete_id TEXT;
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS strava_connected BOOLEAN DEFAULT FALSE;
-
 ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS proof_status TEXT DEFAULT 'Not Submitted';
 ALTER TABLE public.registrations DROP CONSTRAINT IF EXISTS registrations_proof_status_check;
 ALTER TABLE public.registrations ADD CONSTRAINT registrations_proof_status_check CHECK (proof_status IN ('Not Submitted', 'Pending', 'Approved', 'Rejected'));

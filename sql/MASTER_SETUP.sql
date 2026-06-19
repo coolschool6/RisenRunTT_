@@ -21,11 +21,6 @@ CREATE TABLE public.profiles (
   avatar_url text DEFAULT '',
   bio text DEFAULT '',
   date_of_birth date DEFAULT NULL,
-  strava_athlete_id text DEFAULT '',
-  strava_connected boolean DEFAULT FALSE,
-  strava_access_token text DEFAULT '',
-  strava_refresh_token text DEFAULT '',
-  strava_expires_at bigint DEFAULT 0,
   created_at timestamp DEFAULT now()
 );
 
@@ -109,6 +104,8 @@ CREATE TABLE public.registrations (
   status text DEFAULT 'Registered' CHECK (status IN ('Registered', 'Approved', 'Rejected', 'Cancelled')),
   proof_status text DEFAULT 'Not Submitted' CHECK (proof_status IN ('Not Submitted', 'Pending', 'Approved', 'Rejected')),
   screenshot_url text DEFAULT '',
+  finish_time text DEFAULT '',
+  proof_verified_at timestamptz DEFAULT NULL,
   quantity integer DEFAULT 1,
   billing_first_name text DEFAULT '',
   billing_last_name text DEFAULT '',
@@ -166,7 +163,7 @@ CREATE TABLE public.results (
   time_formatted TEXT NOT NULL,
   distance TEXT DEFAULT '',
   position INTEGER DEFAULT 0,
-  source TEXT DEFAULT 'manual' CHECK (source IN ('manual', 'strava', 'csv')),
+  source TEXT DEFAULT 'manual' CHECK (source IN ('manual', 'csv')),
   proof_status TEXT DEFAULT 'approved' CHECK (proof_status IN ('approved', 'pending', 'rejected')),
   created_at timestamp DEFAULT now()
 );
@@ -177,31 +174,6 @@ CREATE POLICY "Public read results" ON public.results
   FOR SELECT USING (true);
 
 CREATE POLICY "Admin all results" ON public.results
-  FOR ALL USING (public.get_my_role() = 'admin');
-
--- ============================================================
--- STRAVA ACTIVITIES TABLE (Feature 1)
--- ============================================================
-CREATE TABLE public.strava_activities (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid REFERENCES auth.users NOT NULL,
-  strava_activity_id bigint NOT NULL UNIQUE,
-  name TEXT DEFAULT '',
-  distance numeric(10,2) DEFAULT 0,
-  moving_time integer DEFAULT 0,
-  activity_date timestamp DEFAULT now(),
-  imported_at timestamp DEFAULT now()
-);
-
-ALTER TABLE public.strava_activities ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users read own activities" ON public.strava_activities
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users insert own activities" ON public.strava_activities
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Admin all activities" ON public.strava_activities
   FOR ALL USING (public.get_my_role() = 'admin');
 
 -- ============================================================
