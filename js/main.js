@@ -205,9 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchType === 'event') {
           return (ev.title || '').toLowerCase().indexOf(search) !== -1 ||
                  (ev.location || '').toLowerCase().indexOf(search) !== -1 ||
-                 (ev.category || '').toLowerCase().indexOf(search) !== -1;
+                 (ev.category || '').toLowerCase().indexOf(search) !== -1 ||
+                 (ev.description || '').toLowerCase().indexOf(search) !== -1 ||
+                 (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
         }
-        return (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
+        return (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1 ||
+               (ev.description || '').toLowerCase().indexOf(search) !== -1;
       });
     }
 
@@ -238,11 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    if (container) renderEventCards(container, filtered);
+    if (container) renderEventCards(container, filtered, search);
   };
 
-  function renderEventCards(target, events) {
-    if (!events || events.length === 0) { target.innerHTML = '<p style="color:var(--gray)">No events match your filters.</p>'; return; }
+  function renderEventCards(target, events, searchTerm) {
+    if (!events || events.length === 0) { target.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>' + (searchTerm ? 'No events match "' + searchTerm + '".' : 'No events match your filters.') + '</p></div>'; return; }
     const imgs = [
       'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
       'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
@@ -294,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await window.adminPromise;
       const { data: events, error } = await window.supabase.from('events').select('*').order('created_at', { ascending: false });
       if (!error && events) _allEvents = events;
-      if (container) renderEventCards(container, _allEvents);
+      if (container) renderEventCards(container, _allEvents, '');
       if (indexGrid) {
         indexGrid.innerHTML = _allEvents.slice(0, 3).map(function (ev) {
           const safeId = ev.id || 0;
