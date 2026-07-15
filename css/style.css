@@ -98,6 +98,9 @@ img {
   font-weight: 900;
 }
 
+.logo {
+  position: relative;
+}
 .logo-img {
   width: 42px;
   height: 42px;

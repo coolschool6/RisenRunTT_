@@ -129,7 +129,7 @@
           '<div class="detail-row"><span class="label">Event</span><span class="value">' + ev.title + '</span></div>' +
           '<div class="detail-row"><span class="label">Date</span><span class="value">' + (ev.start_date || 'TBD') + (ev.start_time ? ' at ' + ev.start_time : '') + '</span></div>' +
           (ev.location ? '<div class="detail-row"><span class="label">Location</span><span class="value">' + ev.location + '</span></div>' : '') +
-          (ev.price && ev.price !== '0.00' ? '<div class="detail-row"><span class="label">Amount</span><span class="value">TTD' + ev.price + ' (Demo - No Charge)</span></div>' : '<div class="detail-row"><span class="label">Amount</span><span class="value">Free</span></div>') +
+            (ev.price && ev.price !== '0.00' ? '<div class="detail-row"><span class="label">Amount</span><span class="value">TTD' + ev.price + ' <span style="color:#856404;font-weight:600;">(Demo — no real payment processed)</span></span></div>' : '<div class="detail-row"><span class="label">Amount</span><span class="value">Free</span></div>') +
           '<div class="detail-row"><span class="label">Status</span><span class="value" style="color:#155724;font-weight:700;">Registered</span></div>' +
           '<div class="actions">' +
             '<a href="dashboard.html" class="btn-confirm-action btn-confirm-primary"><i class="fas fa-running"></i> My Dashboard</a>' +

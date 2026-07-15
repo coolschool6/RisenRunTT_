@@ -1,3 +1,11 @@
+// Image fallback on error
+function imgFallback(e) {
+  var el = e.target;
+  if (el.dataset.fallbackSet) return;
+  el.dataset.fallbackSet = '1';
+  el.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22 fill=%22%23f0f0f0%22%3E%3Crect width=%22400%22 height=%22300%22/%3E%3Ctext x=%22200%22 y=%22150%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22 font-family=%22sans-serif%22%3EImage unavailable%3C/text%3E%3C/svg%3E';
+}
+
 // Supabase setup
 const supabaseUrl = "https://yfyopxzdvyntjnocnzpi.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmeW9weHpkdnludGpub2NuenBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0MTQ2MDYsImV4cCI6MjA5Njk5MDYwNn0.-p-k2H9AbOIW7_Ka5ZpybfFiCpImGMkl4dHIiuuEQFw";
@@ -6,7 +14,13 @@ window.supabase = _supabaseCreateClient(supabaseUrl, supabaseKey);
 window.currentUserRole = null;
 window.adminPromise = new Promise(r => { window.adminResolve = r; });
 
+// Fix all logo images on load
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.logo-img').forEach(function (img) {
+    img.addEventListener('error', function () {
+      this.style.display = 'none';
+    });
+  });
 
   // ─── Mobile nav toggle ───
   const toggle = document.getElementById('mobileToggle');
@@ -56,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         slidesContainer.innerHTML = slideData.map((ev, i) => {
           const img = ev.banner_url || defaultImgs[i % defaultImgs.length];
           return '<div class="hero-slide' + (i === 0 ? ' active' : '') + '" style="background: ' + gradients[i % gradients.length] + ';">' +
-            '<div class="hero-slide-bg" style="background-image: url(\'' + img + '\');"></div>' +
+            '<div class="hero-slide-bg" style="background-image: url(\'' + img + '\');" onerror="this.style.display=\'none\';"></div>' +
             '<div class="hero-slide-content">' +
               '<h1>' + (ev.title || 'Upcoming Race') + '</h1>' +
               '<a href="events.html" class="hero-btn">Register Now</a>' +
@@ -94,8 +108,46 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prevBtn) prevBtn.addEventListener('click', prev);
         if (nextBtn) nextBtn.addEventListener('click', next);
         resetInterval();
-      } catch (_) {}
+      } catch (_) {
+        renderFallbackSlides();
+      }
     })();
+    function renderFallbackSlides() {
+      if (!slidesContainer) return;
+      slidesContainer.innerHTML = defaultImgs.map(function(url, i) {
+        return '<div class="hero-slide' + (i === 0 ? ' active' : '') + '" style="background: ' + gradients[i % gradients.length] + ';">' +
+          '<div class="hero-slide-bg" style="background-image: url(\'' + url + '\');"></div>' +
+          '<div class="hero-slide-content">' +
+            '<h1>' + (['Rise & Run TT', 'Join the Community', 'Virtual & In-Person Races'][i]) + '</h1>' +
+            '<a href="events.html" class="hero-btn">Register Now</a>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      var s = slidesContainer.querySelectorAll('.hero-slide');
+      if (s.length === 0) return;
+      dotsContainer.innerHTML = '';
+      s.forEach(function(_, i) {
+        var dot = document.createElement('button');
+        dot.className = 'slider-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        dot.addEventListener('click', function() { goToFallback(i); });
+        dotsContainer.appendChild(dot);
+      });
+      var d = dotsContainer.querySelectorAll('.slider-dot');
+      var currentFb = 0;
+      function goToFallback(index) {
+        s.forEach(function(el) { el.classList.remove('active'); });
+        d.forEach(function(el) { el.classList.remove('active'); });
+        currentFb = (index + s.length) % s.length;
+        s[currentFb].classList.add('active');
+        d[currentFb].classList.add('active');
+        clearInterval(interval);
+        interval = setInterval(function() { goToFallback(currentFb + 1); }, 5000);
+      }
+      if (prevBtn) prevBtn.addEventListener('click', function() { goToFallback(currentFb - 1); });
+      if (nextBtn) nextBtn.addEventListener('click', function() { goToFallback(currentFb + 1); });
+      interval = setInterval(function() { goToFallback(currentFb + 1); }, 5000);
+    }
   }
 
   // ─── Carousel scroll ───
@@ -252,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (ev.start_time) dateDisplay += ' \u00b7 ' + ev.start_time;
       return '<div class="race-card" style="position:relative;cursor:pointer;" data-href="event_detail.html?id=' + ev.id + '">' +
         '<button class="admin-only admin-delete-btn" data-id="' + ev.id + '" style="display:none;position:absolute;top:8px;right:8px;z-index:2;background:var(--accent-red);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;font-size:14px;line-height:1;">&times;</button>' +
-        '<div class="race-card-img-wrap"><img src="' + img + '" alt="' + ev.title + '" class="race-card-img"></div>' +
+        '<div class="race-card-img-wrap"><img src="' + img + '" alt="' + ev.title + '" class="race-card-img" onerror="imgFallback(event)"></div>' +
         '<div class="race-card-content">' +
           '<div class="race-card-info">' +
             '<div class="race-card-datetime"><span>' + dateDisplay + '</span></div>' +
@@ -323,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (ev.start_time) dateDisplay += ' \u00b7 ' + ev.start_time;
           return '<div class="event-card" style="position:relative;cursor:pointer;" data-href="event_detail.html?id=' + ev.id + '">' +
             '<button class="admin-only admin-delete-btn" data-id="' + ev.id + '" style="display:none;position:absolute;top:8px;right:8px;z-index:2;background:var(--accent-red);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;align-items:center;justify-content:center;font-size:14px;line-height:1;">&times;</button>' +
-            '<img src="' + img + '" alt="" class="event-card-img">' +
+            '<img src="' + img + '" alt="" class="event-card-img" onerror="imgFallback(event)">' +
             '<div class="event-card-body">' +
               '<span class="event-card-date">' + dateDisplay + '</span>' +
               '<h3>' + ev.title + '</h3>' +
@@ -349,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadCarousel(track) {
     try {
       const { data: events, error } = await window.supabase.from('events').select('*').order('start_date', { ascending: true }).limit(8);
-      if (error || !events || events.length === 0) return;
+      if (error || !events || events.length === 0) { track.style.display = 'none'; return; }
 
       const imgs = [
         'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&h=600&fit=crop',
@@ -359,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=600&h=600&fit=crop'
       ];
 
+      track.style.display = '';
       track.innerHTML = events.map(ev => {
         const safeId = ev.id || Math.floor(Math.random() * imgs.length);
         const img = ev.banner_url || imgs[safeId % imgs.length];
@@ -367,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ev.start_time) dateDisplay += ' · ' + ev.start_time;
         return '<div class="carousel-card" data-href="event_detail.html?id=' + ev.id + '" style="cursor:pointer;">' +
           '<div class="carousel-card-link">' +
-            '<div class="carousel-card-img" style="background-image:url(\'' + img + '\');">' +
+            '<div class="carousel-card-img" style="background-image:url(\'' + img + '\');" onerror="this.style.display=\'none\';">' +
               '<span class="carousel-badge">' + cat + '</span>' +
               '<div class="carousel-card-footer">' +
                 '<p class="carousel-date">' + dateDisplay + '</p>' +

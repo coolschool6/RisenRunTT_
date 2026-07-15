@@ -182,6 +182,15 @@
       let localUser;
       try { localUser = JSON.parse(localStorage.getItem('rr_user')); } catch (_) {}
       if (!localUser || !localUser.id) { window.location.href = 'login.html'; return; }
+      // Verify session with Supabase server-side
+      const { data: { user }, error } = await window.supabase.auth.getUser();
+      if (error || !user || user.id !== localUser.id) {
+        localStorage.removeItem('rr_user');
+        localStorage.removeItem('rr_token');
+        localStorage.removeItem('rr_runner_name');
+        window.location.href = 'login.html';
+        return;
+      }
       document.getElementById('dashUserName').textContent = localUser.name || 'Athlete';
       document.getElementById('navLogin').style.display = 'none';
       document.getElementById('navSignup').style.display = 'none';
