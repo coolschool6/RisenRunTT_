@@ -347,16 +347,6 @@
         </div>
 
         <div class="field">
-          <label>Event Recurrence <span class="req">*</span></label>
-          <select id="fRecurrence">
-            <option value="">Don't Repeat</option>
-            <option value="Weekly">Weekly</option>
-            <option value="Monthly">Monthly</option>
-            <option value="Yearly">Yearly</option>
-          </select>
-        </div>
-
-        <div class="field">
           <label>Participant Certification</label>
           <div class="toggle-wrap">
             <input type="checkbox" id="fCert">
@@ -585,7 +575,6 @@
             start_time: eventType !== 'virtual' ? document.getElementById('fStartTime').value : null,
             end_date: eventType !== 'virtual' ? (document.getElementById('fEndDate').value || null) : null,
             end_time: eventType !== 'virtual' ? (document.getElementById('fEndTime').value || null) : null,
-            recurrence: document.getElementById('fRecurrence').value,
             enable_certification: document.getElementById('fCert').checked
           };
 
