@@ -45,6 +45,16 @@
     .eac-badge.pending-proofs { background: #fff3cd; color: #856404; }
     .eac-badge.none-pending { background: #e2e3e5; color: #383d41; }
 
+    .eac-tally { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+    .eac-tally-item {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--light-gray); border-radius: var(--radius); padding: 10px 18px;
+      min-width: 80px; border: 1px solid var(--border);
+    }
+    .eac-tally-num { font-size: 1.5rem; font-weight: 900; color: var(--primary); line-height: 1; }
+    .eac-tally-label { font-size: 0.68rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+    .eac-tally-item.highlight .eac-tally-num { color: var(--accent-red); }
+
     .event-admin-card .eac-actions { display: flex; gap: 8px; align-items: center; }
     .event-admin-card .eac-actions button, .event-admin-card .eac-actions a {
       padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.78rem;
@@ -335,28 +345,32 @@
       var aggMap = {};
       if (aggData) {
         aggData.forEach(function (r) {
-          if (!aggMap[r.event_id]) aggMap[r.event_id] = { totalRegs: 0, totalParticipants: 0, pendingProofs: 0 };
+          if (!aggMap[r.event_id]) aggMap[r.event_id] = { totalRegs: 0, totalParticipants: 0, pendingProofs: 0, approved: 0, rejected: 0, pending: 0, notSubmitted: 0 };
           aggMap[r.event_id].totalRegs++;
           aggMap[r.event_id].totalParticipants += r.quantity || 1;
-          if (r.proof_status === 'Pending') aggMap[r.event_id].pendingProofs++;
+          var ps = (r.proof_status || 'Not Submitted');
+          if (ps === 'Approved') aggMap[r.event_id].approved++;
+          else if (ps === 'Rejected') aggMap[r.event_id].rejected++;
+          else if (ps === 'Pending') { aggMap[r.event_id].pendingProofs++; aggMap[r.event_id].pending++; }
+          else aggMap[r.event_id].notSubmitted++;
         });
       }
 
       // Render event cards
       container.innerHTML = events.map(function (ev) {
-        var agg = aggMap[ev.id] || { totalRegs: 0, totalParticipants: 0, pendingProofs: 0 };
-        var pendingBadge = agg.pendingProofs > 0
-          ? '<span class="eac-badge pending-proofs">Pending Proofs: ' + agg.pendingProofs + '</span>'
-          : '<span class="eac-badge none-pending">No pending proofs</span>';
+        var agg = aggMap[ev.id] || { totalRegs: 0, totalParticipants: 0, pendingProofs: 0, approved: 0, rejected: 0, pending: 0, notSubmitted: 0 };
         return '<div class="event-admin-card" data-event-id="' + ev.id + '">' +
           '<div class="eac-header">' +
             '<div class="eac-info">' +
               '<h3>' + (ev.title || 'Untitled') + '</h3>' +
               '<div class="eac-meta">' + (ev.start_date || '') + (ev.start_time ? ' \u00b7 ' + ev.start_time : '') + ' \u00b7 ' + (ev.location || '') + '</div>' +
-            '</div>' +
-            '<div class="eac-badges">' +
-              '<span class="eac-badge registered">Participants: ' + agg.totalParticipants + ' (' + agg.totalRegs + ' regs)</span>' +
-              pendingBadge +
+              '<div class="eac-tally">' +
+                '<div class="eac-tally-item highlight"><span class="eac-tally-num">' + agg.totalParticipants + '</span><span class="eac-tally-label">Signed Up</span></div>' +
+                '<div class="eac-tally-item"><span class="eac-tally-num">' + agg.totalRegs + '</span><span class="eac-tally-label">Registrations</span></div>' +
+                '<div class="eac-tally-item"><span class="eac-tally-num">' + agg.approved + '</span><span class="eac-tally-label">Approved</span></div>' +
+                '<div class="eac-tally-item"><span class="eac-tally-num">' + agg.pending + '</span><span class="eac-tally-label">Pending</span></div>' +
+                '<div class="eac-tally-item"><span class="eac-tally-num">' + agg.rejected + '</span><span class="eac-tally-label">Rejected</span></div>' +
+              '</div>' +
             '</div>' +
             '<div class="eac-actions">' +
               '<button class="eac-btn-expand eac-toggle-regs"><i class="fas fa-list"></i> View <span class="eac-expand-label">Registrations</span><i class="fas fa-chevron-down eac-arrow"></i></button>' +
