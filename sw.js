@@ -6,7 +6,6 @@ const STATIC_ASSETS = [
   '/login.html',
   '/signup.html',
   '/dashboard.html',
-  '/leaderboard.html',
   '/profile.html',
   '/confirmation.html',
   '/event_detail.html',

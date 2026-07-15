@@ -167,7 +167,6 @@
       <nav class="nav" id="mainNav">
         <a href="index.html">Home</a>
         <a href="events.html">Events & Results</a>
-        <a href="leaderboard.html">Leaderboard</a>
         <a href="login.html" id="navLogin">Login</a>
         <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
         <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
@@ -227,7 +226,6 @@
           <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="events.html">Events & Results</a></li>
-            <li><a href="leaderboard.html">Leaderboard</a></li>
             <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="login.html">Login</a></li>
             <li><a href="signup.html">Sign Up</a></li>
@@ -333,19 +331,20 @@
       }
 
       // Aggregate registration counts per event
-      var { data: aggData } = await window.supabase.from('registrations').select('event_id, proof_status');
+      var { data: aggData } = await window.supabase.from('registrations').select('event_id, proof_status, quantity');
       var aggMap = {};
       if (aggData) {
         aggData.forEach(function (r) {
-          if (!aggMap[r.event_id]) aggMap[r.event_id] = { total: 0, pendingProofs: 0 };
-          aggMap[r.event_id].total++;
+          if (!aggMap[r.event_id]) aggMap[r.event_id] = { totalRegs: 0, totalParticipants: 0, pendingProofs: 0 };
+          aggMap[r.event_id].totalRegs++;
+          aggMap[r.event_id].totalParticipants += r.quantity || 1;
           if (r.proof_status === 'Pending') aggMap[r.event_id].pendingProofs++;
         });
       }
 
       // Render event cards
       container.innerHTML = events.map(function (ev) {
-        var agg = aggMap[ev.id] || { total: 0, pendingProofs: 0 };
+        var agg = aggMap[ev.id] || { totalRegs: 0, totalParticipants: 0, pendingProofs: 0 };
         var pendingBadge = agg.pendingProofs > 0
           ? '<span class="eac-badge pending-proofs">Pending Proofs: ' + agg.pendingProofs + '</span>'
           : '<span class="eac-badge none-pending">No pending proofs</span>';
@@ -356,7 +355,7 @@
               '<div class="eac-meta">' + (ev.start_date || '') + (ev.start_time ? ' \u00b7 ' + ev.start_time : '') + ' \u00b7 ' + (ev.location || '') + '</div>' +
             '</div>' +
             '<div class="eac-badges">' +
-              '<span class="eac-badge registered">Registered: ' + agg.total + '</span>' +
+              '<span class="eac-badge registered">Participants: ' + agg.totalParticipants + ' (' + agg.totalRegs + ' regs)</span>' +
               pendingBadge +
             '</div>' +
             '<div class="eac-actions">' +

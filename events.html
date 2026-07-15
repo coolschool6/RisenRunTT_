@@ -223,7 +223,6 @@
       <nav class="nav" id="mainNav">
         <a href="index.html">Home</a>
         <a href="events.html" class="active">Events & Results</a>
-        <a href="leaderboard.html">Leaderboard</a>
         <a href="login.html" id="navLogin">Login</a>
         <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
         <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
@@ -242,12 +241,8 @@
       <h1>Hello, <span id="userDisplayName">Runner</span></h1>
       <p>Find your next race. Track your results. Powered by <strong>Rise & Run TT</strong>.</p>
       <div class="search-bar">
-          <select class="search-type">
-            <option value="athlete">Athlete</option>
-            <option selected value="event">Event</option>
-          </select>
           <i class="fas fa-search"></i>
-          <input type="text" placeholder="Search events by name, location, or category">
+          <input type="text" placeholder="Search events or athletes...">
       </div>
     </div>
   </section>
@@ -501,7 +496,6 @@
           <ul>
             <li><a href="index.html">Home</a></li>
             <li><a href="events.html">Events & Results</a></li>
-            <li><a href="leaderboard.html">Leaderboard</a></li>
             <li><a href="login.html">Login</a></li>
             <li><a href="signup.html">Sign Up</a></li>
           </ul>
@@ -721,30 +715,16 @@
         var sortLink = document.querySelector('.sort-link.active');
         var year = document.querySelector('.sort-year').value;
         var search = document.querySelector('.search-bar input').value;
-        var searchType = document.querySelector('.search-type').value;
         window.applyEventFilters({
           sort: sortLink ? sortLink.textContent.toLowerCase().replace(/\s+/g, '') : 'upcoming',
           year: year,
-          search: search,
-          searchType: searchType
+          search: search
         });
       }
 
       var searchInput = document.querySelector('.search-bar input');
       if (searchInput) {
         searchInput.addEventListener('input', applyFilters);
-      }
-      var searchType = document.querySelector('.search-type');
-      if (searchType) {
-        searchType.addEventListener('change', function () {
-          var input = document.querySelector('.search-bar input');
-          if (this.value === 'event') {
-            input.placeholder = "Enter an event name";
-          } else {
-            input.placeholder = "Enter an athlete's name";
-          }
-          applyFilters();
-        });
       }
 
       document.querySelectorAll('.sort-link').forEach(function (link) {

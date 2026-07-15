@@ -120,28 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   }
 
-  function applyRoleFromStorage() {
-    try {
-      const u = JSON.parse(localStorage.getItem('rr_user') || '{}');
-      if (u.role === 'admin') { showAdminUI(); return true; }
-    } catch (_) {}
-    return false;
-  }
-
-  // Immediate: check localStorage
-  applyRoleFromStorage();
-
   async function checkAdminStatus() {
     try {
       const { data: { user } } = await window.supabase.auth.getUser();
       if (!user) { console.log('[admin] no user'); window.adminResolve(); return; }
       const { data: role, error: rpcErr } = await window.supabase.rpc('get_my_role');
       if (role === 'admin') { showAdminUI(); }
-      else if (rpcErr) {
-        // RPC failed — fall back to localStorage role
-        const stored = JSON.parse(localStorage.getItem('rr_user') || '{}');
-        if (stored.role === 'admin') showAdminUI();
-      }
+      else if (rpcErr) { console.warn('[admin] RPC failed, denying admin:', rpcErr.message); }
     } catch (e) { console.log('[admin] error:', e); }
     window.adminResolve();
     document.dispatchEvent(new CustomEvent('admin-status-resolved', { detail: { role: window.currentUserRole } }));
@@ -177,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async e => {
       e.preventDefault();
-      await window.supabase.auth.signOut();
+      try { await window.supabase.auth.signOut(); } catch (_) {}
       localStorage.removeItem('rr_token');
       localStorage.removeItem('rr_user');
       localStorage.removeItem('rr_runner_name');
@@ -190,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const indexGrid = document.getElementById('dynamicEventGrid');
   const carouselTrackEl = document.getElementById('carouselTrack');
   let _allEvents = [];
+  let _eventAthletes = {};
 
   // Make filter controls work on the events page
   window.applyEventFilters = function (filters) {
@@ -198,19 +184,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const sort = filters.sort || 'upcoming';
     const year = filters.year || '';
     const search = (filters.search || '').toLowerCase();
-    const searchType = filters.searchType || 'event';
 
     if (search) {
       filtered = filtered.filter(function (ev) {
-        if (searchType === 'event') {
-          return (ev.title || '').toLowerCase().indexOf(search) !== -1 ||
-                 (ev.location || '').toLowerCase().indexOf(search) !== -1 ||
-                 (ev.category || '').toLowerCase().indexOf(search) !== -1 ||
-                 (ev.description || '').toLowerCase().indexOf(search) !== -1 ||
-                 (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
+        var athleteMatch = false;
+        var athletes = _eventAthletes[ev.id];
+        if (athletes) {
+          for (var i = 0; i < athletes.length; i++) {
+            if (athletes[i].toLowerCase().indexOf(search) !== -1) {
+              athleteMatch = true;
+              break;
+            }
+          }
         }
-        return (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1 ||
-               (ev.description || '').toLowerCase().indexOf(search) !== -1;
+        return athleteMatch ||
+               (ev.title || '').toLowerCase().indexOf(search) !== -1 ||
+               (ev.location || '').toLowerCase().indexOf(search) !== -1 ||
+               (ev.category || '').toLowerCase().indexOf(search) !== -1 ||
+               (ev.description || '').toLowerCase().indexOf(search) !== -1 ||
+               (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
       });
     }
 
@@ -295,9 +287,34 @@ document.addEventListener('DOMContentLoaded', () => {
   if (container || indexGrid) {
     (async function () {
       await window.adminPromise;
-      const { data: events, error } = await window.supabase.from('events').select('*').order('created_at', { ascending: false });
+      const [{ data: events, error }, { data: regs }] = await Promise.all([
+        window.supabase.from('events').select('*').order('created_at', { ascending: false }),
+        window.supabase.from('registrations').select('event_id, billing_first_name, billing_last_name, attendee_first_name, attendee_last_name')
+      ]);
       if (!error && events) _allEvents = events;
-      if (container) renderEventCards(container, _allEvents, '');
+      if (regs) {
+        regs.forEach(function (r) {
+          if (!r.event_id) return;
+          if (!_eventAthletes[r.event_id]) _eventAthletes[r.event_id] = [];
+          var names = [r.billing_first_name, r.billing_last_name, r.attendee_first_name, r.attendee_last_name].filter(Boolean);
+          names.forEach(function (n) {
+            if (_eventAthletes[r.event_id].indexOf(n) === -1) _eventAthletes[r.event_id].push(n);
+          });
+        });
+      }
+      if (container) {
+        renderEventCards(container, _allEvents, '');
+        var si = document.querySelector('.search-bar input');
+        var sl = document.querySelector('.sort-link.active');
+        var sy = document.querySelector('.sort-year');
+        if (si && si.value) {
+          window.applyEventFilters({
+            sort: sl ? sl.textContent.toLowerCase().replace(/\s+/g, '') : 'upcoming',
+            year: sy ? sy.value : '',
+            search: si.value
+          });
+        }
+      }
       if (indexGrid) {
         indexGrid.innerHTML = _allEvents.slice(0, 3).map(function (ev) {
           const safeId = ev.id || 0;

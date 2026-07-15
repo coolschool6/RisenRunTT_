@@ -153,30 +153,6 @@ CREATE POLICY "Admin all waitlist" ON public.waitlist
   FOR ALL USING (public.get_my_role() = 'admin');
 
 -- ============================================================
--- RESULTS TABLE (Feature 2 — Leaderboard)
--- ============================================================
-CREATE TABLE public.results (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  event_id uuid REFERENCES public.events NOT NULL,
-  user_id uuid REFERENCES auth.users,
-  full_name TEXT NOT NULL,
-  time_formatted TEXT NOT NULL,
-  distance TEXT DEFAULT '',
-  position INTEGER DEFAULT 0,
-  source TEXT DEFAULT 'manual' CHECK (source IN ('manual', 'csv')),
-  proof_status TEXT DEFAULT 'approved' CHECK (proof_status IN ('approved', 'pending', 'rejected')),
-  created_at timestamp DEFAULT now()
-);
-
-ALTER TABLE public.results ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Public read results" ON public.results
-  FOR SELECT USING (true);
-
-CREATE POLICY "Admin all results" ON public.results
-  FOR ALL USING (public.get_my_role() = 'admin');
-
--- ============================================================
 -- RPC FUNCTION: get_my_role (SECURITY DEFINER = bypasses RLS)
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.get_my_role()
@@ -242,7 +218,6 @@ CREATE INDEX IF NOT EXISTS idx_events_start_date ON public.events(start_date);
 CREATE INDEX IF NOT EXISTS idx_registrations_user_id ON public.registrations(user_id);
 CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON public.registrations(event_id);
 CREATE INDEX IF NOT EXISTS idx_registrations_proof_status ON public.registrations(proof_status);
-CREATE INDEX IF NOT EXISTS idx_results_event_id ON public.results(event_id);
 CREATE INDEX IF NOT EXISTS idx_waitlist_event_id ON public.waitlist(event_id);
 
 -- ============================================================

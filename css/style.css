@@ -545,7 +545,7 @@ img {
 
 .search-bar input {
   width: 100%;
-  padding: 14px 20px 14px 110px;
+  padding: 14px 20px 14px 48px;
   border-radius: var(--radius-full);
   border: none;
   font-size: 1rem;
@@ -559,23 +559,16 @@ img {
 }
 
 .search-bar i {
-  display: none;
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.4);
+  font-size: 1rem;
+  pointer-events: none;
 }
 
-.search-bar .search-type {
-  position: absolute;
-  left: 4px;
-  top: 4px;
-  bottom: 4px;
-  background: var(--primary);
-  color: var(--white);
-  border: none;
-  padding: 0 20px;
-  border-radius: var(--radius-full);
-  font-size: 0.85rem;
-  cursor: pointer;
-  outline: none;
-}
+
 
 /* --- Up Next Carousel --- */
 .upnext-section {
