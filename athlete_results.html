@@ -223,7 +223,7 @@
             ? r.attendee_first_name + ' ' + r.attendee_last_name
             : (r.billing_first_name || '') + ' ' + (r.billing_last_name || '');
           var timeDisplay = r.finish_time || '—';
-          var sex = '—';
+          var sex = r.attendee_gender || '—';
           var placement = r.placement || null;
           var placementHtml = placement !== null ? placement : '—';
           var eventName = r.events ? r.events.title : 'Unknown Event';

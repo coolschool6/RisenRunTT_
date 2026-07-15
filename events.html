@@ -429,6 +429,15 @@
               <label>Location / City (optional)</label>
               <input type="text" id="attLocation" placeholder="">
             </div>
+            <div class="form-group">
+              <label>Gender (optional)</label>
+              <select id="attGender">
+                <option value="">Prefer not to say</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="O">Other</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -685,6 +694,21 @@
         if (!selectedEventId) { alert('Event ID missing. Cannot submit registration.'); return; }
 
         this.disabled = true;
+        this.textContent = 'Checking...';
+
+        var { data: existingReg } = await window.supabase.from('registrations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('event_id', selectedEventId)
+          .maybeSingle();
+
+        if (existingReg) {
+          this.disabled = false;
+          this.innerHTML = '<i class="fas fa-lock"></i> Pay &amp; Complete Registration';
+          showNotification('You are already registered for this event.', 'info');
+          return;
+        }
+
         this.textContent = 'Submitting...';
 
         const registrationData = {
@@ -699,7 +723,8 @@
           attendee_first_name: document.getElementById('attFirstName').value.trim(),
           attendee_last_name: document.getElementById('attLastName').value.trim(),
           attendee_phone: document.getElementById('attPhone').value.trim(),
-          attendee_location: document.getElementById('attLocation').value.trim()
+          attendee_location: document.getElementById('attLocation').value.trim(),
+          attendee_gender: document.getElementById('attGender').value
         };
 
         const { error } = await window.supabase.from('registrations').insert(registrationData);

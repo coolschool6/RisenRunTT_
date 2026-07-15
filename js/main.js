@@ -14,6 +14,88 @@ window.supabase = _supabaseCreateClient(supabaseUrl, supabaseKey);
 window.currentUserRole = null;
 window.adminPromise = new Promise(r => { window.adminResolve = r; });
 
+// ─── Shared modal/notification functions ───
+window.showNotification = function (message, type) {
+  type = type || 'error';
+  var existing = document.getElementById('rrNotification');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.className = 'notification-overlay';
+  overlay.id = 'rrNotification';
+  overlay.innerHTML =
+    '<div class="notification-box">' +
+      '<div class="notif-icon ' + type + '">' +
+        (type === 'success' ? '<i class="fas fa-check-circle"></i>' :
+         type === 'info' ? '<i class="fas fa-info-circle"></i>' :
+                           '<i class="fas fa-exclamation-circle"></i>') +
+      '</div>' +
+      '<div class="notif-title">' +
+        (type === 'success' ? 'Success' : type === 'info' ? 'Notice' : 'Error') +
+      '</div>' +
+      '<div class="notif-message">' + message + '</div>' +
+      '<button class="notif-close">OK</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function () { overlay.classList.add('active'); });
+  overlay.querySelector('.notif-close').addEventListener('click', function () {
+    overlay.classList.remove('active');
+    setTimeout(function () { overlay.remove(); }, 300);
+  });
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) {
+      overlay.classList.remove('active');
+      setTimeout(function () { overlay.remove(); }, 300);
+    }
+  });
+};
+
+window.showAlert = function (title, msg, type) {
+  type = type || 'info';
+  var modal = document.getElementById('appModal');
+  if (!modal) return Promise.resolve();
+  var icon = document.getElementById('modalIcon');
+  var titleEl = document.getElementById('modalTitle');
+  var bodyEl = document.getElementById('modalBody');
+  var footerEl = document.getElementById('modalFooter');
+  if (!icon || !titleEl || !bodyEl || !footerEl) return Promise.resolve();
+  icon.className = 'cm-icon ' + type;
+  var iconMap = { info: 'fa-info-circle', success: 'fa-check-circle', warn: 'fa-exclamation-triangle', error: 'fa-times-circle', confirm: 'fa-question-circle' };
+  icon.innerHTML = '<i class="fas ' + (iconMap[type] || 'fa-info-circle') + '"></i>';
+  titleEl.textContent = title;
+  bodyEl.textContent = msg;
+  footerEl.innerHTML = '<button class="cm-btn primary modal-close-btn">OK</button>';
+  modal.classList.add('open');
+  return new Promise(function (resolve) {
+    function close() { modal.classList.remove('open'); resolve(); cleanup(); }
+    function handler(e) { if (e.target === modal) close(); }
+    modal.querySelector('.modal-close-btn').addEventListener('click', close);
+    modal.addEventListener('click', handler);
+    function cleanup() { modal.removeEventListener('click', handler); }
+  });
+};
+
+window.showConfirm = function (title, msg) {
+  var modal = document.getElementById('appModal');
+  if (!modal) return Promise.resolve(false);
+  var icon = document.getElementById('modalIcon');
+  var titleEl = document.getElementById('modalTitle');
+  var bodyEl = document.getElementById('modalBody');
+  var footerEl = document.getElementById('modalFooter');
+  if (!icon || !titleEl || !bodyEl || !footerEl) return Promise.resolve(false);
+  return new Promise(function (resolve) {
+    icon.className = 'cm-icon confirm';
+    icon.innerHTML = '<i class="fas fa-question-circle"></i>';
+    titleEl.textContent = title;
+    bodyEl.textContent = msg;
+    footerEl.innerHTML = '<button class="cm-btn secondary" id="confirmNo">Cancel</button><button class="cm-btn danger" id="confirmYes">Yes, delete</button>';
+    modal.classList.add('open');
+    function close() { modal.classList.remove('open'); }
+    document.getElementById('confirmNo').addEventListener('click', function () { close(); resolve(false); });
+    document.getElementById('confirmYes').addEventListener('click', function () { close(); resolve(true); });
+    modal.addEventListener('click', function (e) { if (e.target === modal) { close(); resolve(false); } });
+  });
+};
+
 // Fix all logo images on load
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.logo-img').forEach(function (img) {

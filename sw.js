@@ -1,4 +1,4 @@
-const CACHE = 'rise-and-run-tt-v5';
+const CACHE = 'rise-and-run-tt-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -9,10 +9,22 @@ const STATIC_ASSETS = [
   '/profile.html',
   '/confirmation.html',
   '/event_detail.html',
+  '/athlete_results.html',
+  '/admin_dashboard.html',
+  '/admin_create_event.html',
+  '/admin_edit_event.html',
+  '/about.html',
+  '/contact.html',
+  '/faq.html',
+  '/forgot-password.html',
+  '/how-it-works.html',
+  '/privacy.html',
+  '/terms.html',
+  '/update-password.html',
+  '/offline.html',
   '/css/style.css',
   '/js/main.js',
-  '/manifest.json',
-  '/offline.html'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {

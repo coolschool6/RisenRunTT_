@@ -205,45 +205,6 @@
 
   <script src="js/main.js"></script>
   <script>
-    function showNotification(message, type) {
-      type = type || 'error';
-      var existing = document.getElementById('rrNotification');
-      if (existing) existing.remove();
-
-      var overlay = document.createElement('div');
-      overlay.className = 'notification-overlay';
-      overlay.id = 'rrNotification';
-      overlay.innerHTML =
-        '<div class="notification-box">' +
-          '<div class="notif-icon ' + type + '">' +
-            (type === 'success' ? '<i class="fas fa-check-circle"></i>' :
-             type === 'info'    ? '<i class="fas fa-info-circle"></i>' :
-                                  '<i class="fas fa-exclamation-circle"></i>') +
-          '</div>' +
-          '<div class="notif-title">' +
-            (type === 'success' ? 'Success' : type === 'info' ? 'Notice' : 'Error') +
-          '</div>' +
-          '<div class="notif-message">' + message + '</div>' +
-          '<button class="notif-close">OK</button>' +
-        '</div>';
-
-      document.body.appendChild(overlay);
-
-      requestAnimationFrame(function() { overlay.classList.add('active'); });
-
-      overlay.querySelector('.notif-close').addEventListener('click', function() {
-        overlay.classList.remove('active');
-        setTimeout(function() { overlay.remove(); }, 300);
-      });
-
-      overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) {
-          overlay.classList.remove('active');
-          setTimeout(function() { overlay.remove(); }, 300);
-        }
-      });
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
       const supabase = window.supabase;
       var loginForm = document.querySelector('form') || document.getElementById('loginForm');

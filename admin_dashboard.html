@@ -291,46 +291,6 @@
       document.getElementById('proofModalClose').addEventListener('click', function (e) { e.stopPropagation(); proofModal.classList.remove('open'); });
       proofModal.addEventListener('click', function (e) { if (e.target === proofModal) proofModal.classList.remove('open'); });
 
-      // ─── Custom modal helpers ───
-      var appModal = document.getElementById('appModal');
-      var modalIcon = document.getElementById('modalIcon');
-      var modalTitle = document.getElementById('modalTitle');
-      var modalBody = document.getElementById('modalBody');
-      var modalFooter = document.getElementById('modalFooter');
-
-      function showAlert(title, msg, type) {
-        type = type || 'info';
-        modalIcon.className = 'cm-icon ' + type;
-        var iconMap = { info: 'fa-info-circle', success: 'fa-check-circle', warn: 'fa-exclamation-triangle', error: 'fa-times-circle', confirm: 'fa-question-circle' };
-        modalIcon.innerHTML = '<i class="fas ' + (iconMap[type] || 'fa-info-circle') + '"></i>';
-        modalTitle.textContent = title;
-        modalBody.textContent = msg;
-        modalFooter.innerHTML = '<button class="cm-btn primary modal-close-btn">OK</button>';
-        appModal.classList.add('open');
-        return new Promise(function (resolve) {
-          function close() { appModal.classList.remove('open'); resolve(); cleanup(); }
-          function handler(e) { if (e.target === appModal) close(); }
-          appModal.querySelector('.modal-close-btn').addEventListener('click', close);
-          appModal.addEventListener('click', handler);
-          function cleanup() { appModal.removeEventListener('click', handler); }
-        });
-      }
-
-      function showConfirm(title, msg) {
-        return new Promise(function (resolve) {
-          modalIcon.className = 'cm-icon confirm';
-          modalIcon.innerHTML = '<i class="fas fa-question-circle"></i>';
-          modalTitle.textContent = title;
-          modalBody.textContent = msg;
-          modalFooter.innerHTML = '<button class="cm-btn secondary" id="confirmNo">Cancel</button><button class="cm-btn danger" id="confirmYes">Yes, delete</button>';
-          appModal.classList.add('open');
-          function close() { appModal.classList.remove('open'); }
-          document.getElementById('confirmNo').addEventListener('click', function () { close(); resolve(false); });
-          document.getElementById('confirmYes').addEventListener('click', function () { close(); resolve(true); });
-          appModal.addEventListener('click', function (e) { if (e.target === appModal) { close(); resolve(false); } });
-        });
-      }
-
       // ─── Load events + aggregate counts ───
       var container = document.getElementById('eventsContainer');
       var { data: events, error: evErr } = await window.supabase.from('events').select('*').order('start_date', { ascending: false });
@@ -458,6 +418,7 @@
             actionCell =
               '<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">' +
                 '<input type="text" class="ft-input" placeholder="Time (e.g. 00:45:30)" style="width:100px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;">' +
+                '<input type="number" class="pl-input" placeholder="Place" style="width:60px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;" min="1">' +
                 '<button class="btn-approve btn-approve-proof" data-reg-id="' + r.id + '"><i class="fas fa-check"></i></button> ' +
                 '<button class="btn-reject btn-reject-proof" data-reg-id="' + r.id + '"><i class="fas fa-times"></i></button>' +
               '</div>';
@@ -475,6 +436,7 @@
             '<td><span class="proof-status-badge ' + psClass + '">' + psText + '</span></td>' +
             '<td>' + proofCell + '</td>' +
             '<td>' + (r.finish_time || '—') + '</td>' +
+            '<td>' + (r.placement || '—') + '</td>' +
             '<td>' + actionCell + '</td>' +
           '</tr>';
         }).join('');
@@ -482,7 +444,7 @@
           '<thead><tr>' +
             '<th>Billing Name</th><th>Email</th><th>Phone</th>' +
             '<th>Attendee</th><th>Att. Phone</th><th>Location</th><th>Qty</th>' +
-            '<th>Proof Status</th><th>Proof</th><th>Finish Time</th><th>Action</th>' +
+            '<th>Proof Status</th><th>Proof</th><th>Finish Time</th><th>Placement</th><th>Action</th>' +
           '</tr></thead><tbody>' + rows + '</tbody></table>';
       }
 
@@ -494,9 +456,12 @@
             var row = this.closest('tr');
             var ftInput = row.querySelector('.ft-input');
             var finishTime = ftInput ? ftInput.value.trim() : '';
+            var plInput = row.querySelector('.pl-input');
+            var placement = plInput ? parseInt(plInput.value.trim(), 10) : null;
             this.disabled = true;
             var updates = { proof_status: 'Approved', proof_verified_at: new Date().toISOString() };
             if (finishTime) updates.finish_time = finishTime;
+            if (placement && !isNaN(placement)) updates.placement = placement;
             var { error } = await window.supabase.from('registrations').update(updates).eq('id', regId);
             if (error) { await showAlert('Approve Failed', error.message, 'error'); this.disabled = false; return; }
             updateRowStatus(this, regId, 'Approved');
@@ -529,8 +494,14 @@
         // Update finish_time cell from input
         var ftInput = row.querySelector('.ft-input');
         if (ftInput && ftInput.value.trim()) {
-          var ftCell = row.querySelectorAll('td')[9];
-          if (ftCell) ftCell.textContent = ftInput.value.trim();
+          var cells = row.querySelectorAll('td');
+          if (cells[9]) cells[9].textContent = ftInput.value.trim();
+        }
+        // Update placement cell from input
+        var plInput = row.querySelector('.pl-input');
+        if (plInput && plInput.value.trim()) {
+          var cells = row.querySelectorAll('td');
+          if (cells[10]) cells[10].textContent = plInput.value.trim();
         }
         // Update aggregate badges
         updateAggregateBadges(btn, regId, newStatus);

@@ -228,6 +228,15 @@
             <label>Location / City</label>
             <input type="text" id="attLocation">
           </div>
+          <div class="form-group">
+            <label>Gender (optional)</label>
+            <select id="attGender">
+              <option value="">Prefer not to say</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+              <option value="O">Other</option>
+            </select>
+          </div>
         </div>
         <div style="background:#fff3cd;padding:10px 14px;border-radius:8px;font-size:0.85rem;margin-bottom:12px;">🔒 <strong>Demo Mode:</strong> No real payment will be processed. This is a simulation.</div>
         <div class="card-section" style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
@@ -468,6 +477,21 @@
         if (!selectedEventId) { alert('Event ID missing.'); return; }
 
         this.disabled = true;
+        this.textContent = 'Checking...';
+
+        var { data: existingReg } = await window.supabase.from('registrations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('event_id', selectedEventId)
+          .maybeSingle();
+
+        if (existingReg) {
+          this.disabled = false;
+          this.innerHTML = '<i class="fas fa-lock"></i> Pay with Card';
+          window.showNotification('You are already registered for this event.', 'info');
+          return;
+        }
+
         this.textContent = 'Submitting...';
 
         var regData = {
@@ -482,7 +506,8 @@
           attendee_first_name: document.getElementById('attFirstName').value.trim(),
           attendee_last_name: document.getElementById('attLastName').value.trim(),
           attendee_phone: document.getElementById('attPhone').value.trim(),
-          attendee_location: document.getElementById('attLocation').value.trim()
+          attendee_location: document.getElementById('attLocation').value.trim(),
+          attendee_gender: document.getElementById('attGender').value
         };
 
         var { error } = await window.supabase.from('registrations').insert(regData);

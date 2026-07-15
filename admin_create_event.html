@@ -422,45 +422,6 @@
       } catch (_) { window.location.href = 'events.html'; }
 
       // ─── Modal helpers ───
-      var modal = document.getElementById('appModal');
-      var modalIcon = document.getElementById('modalIcon');
-      var modalTitle = document.getElementById('modalTitle');
-      var modalBody = document.getElementById('modalBody');
-      var modalFooter = document.getElementById('modalFooter');
-
-      function showAlert(title, msg, type) {
-        type = type || 'info';
-        modalIcon.className = 'cm-icon ' + type;
-        var iconMap = { info: 'fa-info-circle', success: 'fa-check-circle', warn: 'fa-exclamation-triangle', error: 'fa-times-circle', confirm: 'fa-question-circle' };
-        modalIcon.innerHTML = '<i class="fas ' + (iconMap[type] || 'fa-info-circle') + '"></i>';
-        modalTitle.textContent = title;
-        modalBody.textContent = msg;
-        modalFooter.innerHTML = '<button class="cm-btn primary modal-close-btn">OK</button>';
-        modal.classList.add('open');
-        return new Promise(function (resolve) {
-          function close() { modal.classList.remove('open'); resolve(); cleanup(); }
-          function handler(e) { if (e.target === modal) close(); }
-          modal.querySelector('.modal-close-btn').addEventListener('click', close);
-          modal.addEventListener('click', handler);
-          function cleanup() { modal.removeEventListener('click', handler); }
-        });
-      }
-
-      function showConfirm(title, msg) {
-        return new Promise(function (resolve) {
-          modalIcon.className = 'cm-icon confirm';
-          modalIcon.innerHTML = '<i class="fas fa-question-circle"></i>';
-          modalTitle.textContent = title;
-          modalBody.textContent = msg;
-          modalFooter.innerHTML = '<button class="cm-btn secondary" id="confirmNo">Cancel</button><button class="cm-btn danger" id="confirmYes">Yes, delete</button>';
-          modal.classList.add('open');
-          function close() { modal.classList.remove('open'); }
-          document.getElementById('confirmNo').addEventListener('click', function () { close(); resolve(false); });
-          document.getElementById('confirmYes').addEventListener('click', function () { close(); resolve(true); });
-          modal.addEventListener('click', function (e) { if (e.target === modal) { close(); resolve(false); } });
-        });
-      }
-
       // ─── Event Type Cards ───
       var typeCards = document.querySelectorAll('.event-type-card');
       var locationField = document.getElementById('locationField');
@@ -543,9 +504,6 @@
             bannerUrl = pubData.publicUrl;
           }
 
-          var tags = document.getElementById('fTags').value.trim();
-          var tagsArr = tags ? tags.split(',').slice(0, 2).map(function (t) { return t.trim(); }) : [];
-
           var formData = {
             title: title,
             organizer_name: organizer,
@@ -553,7 +511,6 @@
             category: category,
             event_type: eventType,
             price: parseFloat(document.getElementById('fPrice').value) || 0.00,
-            tags: tagsArr,
             country: country,
             banner_url: bannerUrl,
             description: description,
