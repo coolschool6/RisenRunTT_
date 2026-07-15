@@ -733,7 +733,20 @@
 
       function debounce(fn, ms) { var t; return function () { clearTimeout(t); t = setTimeout(fn, ms); }; }
       var searchInput = document.querySelector('.search-bar input');
-      if (searchInput) {
+      var searchTypeSelect = document.getElementById('searchType');
+      if (searchInput && searchTypeSelect) {
+        searchInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            var val = this.value.trim();
+            var type = searchTypeSelect.value;
+            if (!val) return;
+            if (type === 'athletes' || type === 'all') {
+              window.location.href = 'athlete_results.html?n=' + encodeURIComponent(val);
+              return;
+            }
+          }
+        });
         searchInput.addEventListener('input', debounce(applyFilters, 200));
       }
 

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Athlete Results – Rise & Run TT</title>
+  <meta name="description" content="Search athlete race results">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a0000">
+  <style>
+    .athlete-hero {
+      background: linear-gradient(135deg, #1a0000 0%, #4a0000 50%, #8b0000 100%);
+      padding: 60px 0 40px;
+      color: var(--white);
+      text-align: center;
+    }
+    .athlete-hero h1 { font-size: 2rem; font-weight: 900; margin-bottom: 6px; }
+    .athlete-hero p { opacity: 0.8; font-size: 0.95rem; }
+    .athlete-hero .athlete-search-form {
+      max-width: 500px;
+      margin: 20px auto 0;
+      display: flex;
+      gap: 8px;
+    }
+    .athlete-hero .athlete-search-form input {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: var(--radius-full);
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .athlete-hero .athlete-search-form button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--accent-red);
+      color: var(--white);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .athlete-results-section { padding: 40px 0 60px; }
+    .athlete-results-table-wrap {
+      overflow-x: auto;
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .athlete-results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .athlete-results-table thead th {
+      background: var(--light-gray);
+      color: var(--primary);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+    .athlete-results-table tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--gray);
+    }
+    .athlete-results-table tbody tr:hover { background: #fafafa; }
+    .athlete-results-table tbody td:first-child { font-weight: 600; color: var(--primary); }
+    .athlete-results-table .event-link { color: var(--accent-red); font-weight: 600; text-decoration: none; }
+    .athlete-results-table .event-link:hover { text-decoration: underline; }
+    .athlete-results-table .placement-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    .placement-badge.top3 { background: #fff3cd; color: #856404; }
+    .placement-badge.mid { background: #e8f5e9; color: #2e7d32; }
+    .placement-badge.bottom { background: #fafafa; color: var(--gray); }
+    .loading-spinner { text-align: center; padding: 80px 20px; color: var(--gray); }
+    .loading-spinner i { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--gray); }
+    .empty-state i { font-size: 3rem; opacity: 0.3; margin-bottom: 12px; display: block; }
+    @media (max-width: 768px) {
+      .athlete-hero { padding: 40px 0 30px; }
+      .athlete-hero h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <img src="images/logo.jpg" alt="Rise & Run TT" class="logo-img">
+        Rise & Run TT
+      </a>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <nav class="nav" id="mainNav">
+        <a href="index.html">Home</a>
+        <a href="events.html" class="active">Events & Results</a>
+        <a href="login.html" id="navLogin">Login</a>
+        <a href="signup.html" class="btn-primary" id="navSignup">Sign Up</a>
+        <a href="dashboard.html" style="display:none;color:var(--accent);font-weight:700;" id="navDashboard">My Dashboard</a>
+        <a href="profile.html" style="display:none;color:var(--accent);font-weight:700;" id="navProfile">Profile</a>
+        <a href="admin_create_event.html" class="admin-only" style="display:none;color:var(--accent);font-weight:700;" id="navCreateEvent">+ Add New Event</a>
+        <a href="admin_dashboard.html" class="admin-only" style="display:none;color:var(--accent-red);font-weight:700;" id="navAdmin">Admin Tools</a>
+        <button id="installAppBtn" style="display:none;background:none;border:1px solid var(--accent);color:var(--accent);padding:6px 14px;border-radius:var(--radius-full);font-size:0.8rem;cursor:pointer;"><i class="fas fa-download"></i> Install App</button>
+        <a href="#" style="display:none;color:var(--accent-red);font-weight:600;" id="navLogout">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="athlete-hero">
+    <div class="container">
+      <h1><i class="fas fa-user"></i> Athlete Results</h1>
+      <p>Search for an athlete to see their race history.</p>
+      <form class="athlete-search-form" id="athleteSearchForm">
+        <input type="text" id="athleteSearchInput" placeholder="Enter athlete name..." required>
+        <button type="submit"><i class="fas fa-search"></i> Search</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="athlete-results-section">
+    <div class="container">
+      <div id="athleteResultsContainer">
+        <div class="empty-state">
+          <i class="fas fa-user"></i>
+          <p>Enter an athlete name above to see their race results.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <h3>Rise & Run TT</h3>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events & Results</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>About</h4>
+          <ul>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="terms.html">Terms & Conditions</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Rise & Run TT. All rights reserved.</span>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://www.instagram.com/riserun.tt/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var supabaseUrl = "https://yfyopxzdvyntjnocnzpi.supabase.co";
+      var supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmeW9weHpkdnludGpub2NuenBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0MTQ2MDYsImV4cCI6MjA5Njk5MDYwNn0.-p-k2H9AbOIW7_Ka5ZpybfFiCpImGMkl4dHIiuuEQFw";
+      var supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+      function getQueryParam(name) {
+        var url = new URLSearchParams(window.location.search);
+        return url.get(name) || '';
+      }
+
+      async function loadAthleteResults(name) {
+        var container = document.getElementById('athleteResultsContainer');
+        if (!name) {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-user"></i><p>Enter an athlete name above to see their race results.</p></div>';
+          return;
+        }
+        container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i><p>Searching for "' + name + '"...</p></div>';
+
+        var search = name.toLowerCase().trim();
+        var tokens = search.split(/\s+/);
+
+        var { data: regs, error } = await window.supabase
+          .from('registrations')
+          .select('*, events!inner(title, start_date, start_time, location, category)')
+          .or(tokens.map(function(t) {
+            return 'billing_first_name.ilike.%' + t + '%,billing_last_name.ilike.%' + t + '%,attendee_first_name.ilike.%' + t + '%,attendee_last_name.ilike.%' + t + '%';
+          }).join(','));
+        if (error) { container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error loading results.</p></div>'; console.error(error); return; }
+        if (!regs || regs.length === 0) {
+          container.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found for "' + name + '".</p></div>';
+          return;
+        }
+
+        var rows = '';
+        regs.forEach(function(r) {
+          var fullName = r.attendee_first_name && r.attendee_last_name
+            ? r.attendee_first_name + ' ' + r.attendee_last_name
+            : (r.billing_first_name || '') + ' ' + (r.billing_last_name || '');
+          var timeDisplay = r.finish_time || '—';
+          var sex = '—';
+          var placement = r.placement || null;
+          var placementHtml = placement !== null ? placement : '—';
+          var eventName = r.events ? r.events.title : 'Unknown Event';
+          var eventDate = r.events ? (r.events.start_date || '') : '';
+          var eventLink = r.event_id ? 'event_detail.html?id=' + r.event_id : '#';
+
+          var badgeClass = 'bottom';
+          if (placement !== null && placement <= 3) badgeClass = 'top3';
+          else if (placement !== null && placement <= 10) badgeClass = 'mid';
+
+          rows += '<tr>' +
+            '<td>' + fullName + '</td>' +
+            '<td>' + timeDisplay + '</td>' +
+            '<td>' + sex + '</td>' +
+            '<td><span class="placement-badge ' + badgeClass + '">' + placementHtml + '</span></td>' +
+            '<td><a href="' + eventLink + '" class="event-link">' + eventName + '</a><br><span style="font-size:0.78rem;color:#999;">' + eventDate + '</span></td>' +
+          '</tr>';
+        });
+
+        container.innerHTML =
+          '<h2 style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:16px;">Results for <span style="color:var(--accent-red);">' + name + '</span></h2>' +
+          '<div class="athlete-results-table-wrap">' +
+            '<table class="athlete-results-table">' +
+              '<thead><tr>' +
+                '<th>Click Name</th><th>Time</th><th>Sex</th><th>Placement</th><th>Full Results</th>' +
+              '</tr></thead>' +
+              '<tbody>' + rows + '</tbody>' +
+            '</table>' +
+          '</div>' +
+          '<div style="margin-top:20px;"><a href="events.html" style="color:var(--accent-red);font-weight:600;">&larr; View All Events</a></div>';
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        var nameParam = getQueryParam('n');
+        if (nameParam) {
+          document.getElementById('athleteSearchInput').value = nameParam;
+          loadAthleteResults(nameParam);
+        }
+
+        document.getElementById('athleteSearchForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          var val = document.getElementById('athleteSearchInput').value.trim();
+          if (val) {
+            history.replaceState(null, '', '?n=' + encodeURIComponent(val));
+            loadAthleteResults(val);
+          }
+        });
+      });
+    })();
+  </script>
+  <script src="js/main.js"></script>
+</body>
+</html>

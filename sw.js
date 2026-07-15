@@ -1,4 +1,4 @@
-const CACHE = 'rise-and-run-tt-v4';
+const CACHE = 'rise-and-run-tt-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
