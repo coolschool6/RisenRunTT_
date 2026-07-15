@@ -381,7 +381,8 @@ img {
 .event-card-img {
   width: 100%;
   height: 200px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #1a0000;
 }
 
 .event-card-body {
@@ -660,8 +661,10 @@ img {
 .carousel-card-img {
   position: relative;
   aspect-ratio: 1 / 1.1;
-  background-size: cover;
+  background-size: contain;
   background-position: center;
+  background-repeat: no-repeat;
+  background-color: #1a0000;
   border-radius: 12px;
   overflow: hidden;
   transition: var(--transition);
@@ -801,8 +804,8 @@ img {
 .race-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top;
+  object-fit: contain;
+  background: #1a0000;
   transition: var(--transition);
 }
 
