@@ -238,9 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const sort = filters.sort || 'upcoming';
     const year = filters.year || '';
     const search = (filters.search || '').toLowerCase();
+    const searchType = filters.searchType || 'all';
 
     if (search) {
       filtered = filtered.filter(function (ev) {
+        var eventMatch = (ev.title || '').toLowerCase().indexOf(search) !== -1 ||
+                         (ev.location || '').toLowerCase().indexOf(search) !== -1 ||
+                         (ev.category || '').toLowerCase().indexOf(search) !== -1 ||
+                         (ev.description || '').toLowerCase().indexOf(search) !== -1 ||
+                         (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
         var athleteMatch = false;
         var athletes = _eventAthletes[ev.id];
         if (athletes) {
@@ -251,12 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         }
-        return athleteMatch ||
-               (ev.title || '').toLowerCase().indexOf(search) !== -1 ||
-               (ev.location || '').toLowerCase().indexOf(search) !== -1 ||
-               (ev.category || '').toLowerCase().indexOf(search) !== -1 ||
-               (ev.description || '').toLowerCase().indexOf(search) !== -1 ||
-               (ev.organizer_name || '').toLowerCase().indexOf(search) !== -1;
+        if (searchType === 'events') return eventMatch;
+        if (searchType === 'athletes') return athleteMatch;
+        return eventMatch || athleteMatch;
       });
     }
 
@@ -342,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     (async function () {
       await window.adminPromise;
       const [{ data: events, error }, { data: regs }] = await Promise.all([
-        window.supabase.from('events').select('*').order('created_at', { ascending: false }),
+        window.supabase.from('events').select('*').order('start_date', { ascending: false }),
         window.supabase.from('registrations').select('event_id, billing_first_name, billing_last_name, attendee_first_name, attendee_last_name')
       ]);
       if (!error && events) _allEvents = events;
@@ -350,9 +353,12 @@ document.addEventListener('DOMContentLoaded', () => {
         regs.forEach(function (r) {
           if (!r.event_id) return;
           if (!_eventAthletes[r.event_id]) _eventAthletes[r.event_id] = [];
-          var names = [r.billing_first_name, r.billing_last_name, r.attendee_first_name, r.attendee_last_name].filter(Boolean);
-          names.forEach(function (n) {
-            if (_eventAthletes[r.event_id].indexOf(n) === -1) _eventAthletes[r.event_id].push(n);
+          var fullNames = [
+            [r.billing_first_name, r.billing_last_name].filter(Boolean).join(' '),
+            [r.attendee_first_name, r.attendee_last_name].filter(Boolean).join(' ')
+          ].filter(Boolean);
+          fullNames.forEach(function (fn) {
+            if (_eventAthletes[r.event_id].indexOf(fn) === -1) _eventAthletes[r.event_id].push(fn);
           });
         });
       }
@@ -360,11 +366,13 @@ document.addEventListener('DOMContentLoaded', () => {
         var si = document.querySelector('.search-bar input');
         var sl = document.querySelector('.sort-link.active');
         var sy = document.querySelector('.sort-year');
+        var st = document.getElementById('searchType');
         if (si && si.value) {
           window.applyEventFilters({
             sort: sl ? sl.textContent.toLowerCase().replace(/\s+/g, '') : 'upcoming',
             year: sy ? sy.value : '',
-            search: si.value
+            search: si.value,
+            searchType: st ? st.value : 'all'
           });
         } else {
           renderEventCards(container, _allEvents, '');

@@ -242,7 +242,14 @@
       <p>Find your next race. Track your results. Powered by <strong>Rise & Run TT</strong>.</p>
       <div class="search-bar">
           <i class="fas fa-search"></i>
-          <input type="text" placeholder="Search events or athletes...">
+          <div class="search-bar-inner">
+            <select class="search-type" id="searchType">
+              <option value="all">All</option>
+              <option value="events">Events</option>
+              <option value="athletes">Athletes</option>
+            </select>
+            <input type="text" placeholder="Search events or athletes...">
+          </div>
       </div>
     </div>
   </section>
@@ -715,10 +722,12 @@
         var sortLink = document.querySelector('.sort-link.active');
         var year = document.querySelector('.sort-year').value;
         var search = document.querySelector('.search-bar input').value;
+        var searchType = document.getElementById('searchType').value;
         window.applyEventFilters({
           sort: sortLink ? sortLink.textContent.toLowerCase().replace(/\s+/g, '') : 'upcoming',
           year: year,
-          search: search
+          search: search,
+          searchType: searchType
         });
       }
 
