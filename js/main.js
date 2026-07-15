@@ -355,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
       if (container) {
-        renderEventCards(container, _allEvents, '');
         var si = document.querySelector('.search-bar input');
         var sl = document.querySelector('.sort-link.active');
         var sy = document.querySelector('.sort-year');
@@ -365,6 +364,8 @@ document.addEventListener('DOMContentLoaded', () => {
             year: sy ? sy.value : '',
             search: si.value
           });
+        } else {
+          renderEventCards(container, _allEvents, '');
         }
       }
       if (indexGrid) {

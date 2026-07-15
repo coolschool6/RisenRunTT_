@@ -724,7 +724,11 @@
 
       var searchInput = document.querySelector('.search-bar input');
       if (searchInput) {
-        searchInput.addEventListener('input', applyFilters);
+        searchInput.addEventListener('input', function () {
+          if (document.querySelector('#raceListContainer .race-card')) {
+            applyFilters();
+          }
+        });
       }
 
       document.querySelectorAll('.sort-link').forEach(function (link) {
