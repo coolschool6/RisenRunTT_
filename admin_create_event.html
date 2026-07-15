@@ -476,14 +476,8 @@
         typeCards.forEach(function (c) { c.classList.toggle('active', c.dataset.value === value); });
         if (value === 'virtual') {
           locationField.classList.add('hidden');
-          timingFields.classList.add('hidden');
         } else {
           locationField.classList.remove('hidden');
-          if (value === 'both') {
-            timingFields.classList.remove('hidden');
-          } else {
-            timingFields.classList.remove('hidden');
-          }
         }
       }
 
@@ -571,10 +565,10 @@
             description: description,
             registration_email_url: regEmail,
             video_url: document.getElementById('fVideoUrl').value.trim(),
-            start_date: eventType !== 'virtual' ? document.getElementById('fStartDate').value : null,
-            start_time: eventType !== 'virtual' ? document.getElementById('fStartTime').value : null,
-            end_date: eventType !== 'virtual' ? (document.getElementById('fEndDate').value || null) : null,
-            end_time: eventType !== 'virtual' ? (document.getElementById('fEndTime').value || null) : null,
+            start_date: document.getElementById('fStartDate').value || new Date().toISOString().slice(0, 10),
+            start_time: document.getElementById('fStartTime').value || '00:00',
+            end_date: document.getElementById('fEndDate').value || null,
+            end_time: document.getElementById('fEndTime').value || null,
             enable_certification: document.getElementById('fCert').checked
           };
 
