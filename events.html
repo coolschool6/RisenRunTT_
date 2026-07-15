@@ -722,13 +722,10 @@
         });
       }
 
+      function debounce(fn, ms) { var t; return function () { clearTimeout(t); t = setTimeout(fn, ms); }; }
       var searchInput = document.querySelector('.search-bar input');
       if (searchInput) {
-        searchInput.addEventListener('input', function () {
-          if (document.querySelector('#raceListContainer .race-card')) {
-            applyFilters();
-          }
-        });
+        searchInput.addEventListener('input', debounce(applyFilters, 200));
       }
 
       document.querySelectorAll('.sort-link').forEach(function (link) {

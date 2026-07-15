@@ -231,7 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Make filter controls work on the events page
   window.applyEventFilters = function (filters) {
+    if (!container) return;
     filters = filters || {};
+    if (_allEvents.length === 0) { renderEventCards(container, [], ''); return; }
     let filtered = _allEvents.slice();
     const sort = filters.sort || 'upcoming';
     const year = filters.year || '';
