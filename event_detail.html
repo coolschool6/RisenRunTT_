@@ -11,18 +11,35 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .detail-hero {
-      position: relative; min-height: 360px; display: flex; align-items: flex-end;
-      padding: 40px 0; color: var(--white); overflow: hidden;
+    .detail-banner-section {
+      background: #1a0000;
+      padding: 40px 0;
     }
-    .detail-hero-bg {
-      position: absolute; inset: 0; background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #000;
-      filter: brightness(0.4); z-index: 0;
+    .detail-banner-wrap {
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      max-height: 400px;
     }
-    .detail-hero .container { position: relative; z-index: 1; }
-    .detail-hero h1 { font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; line-height: 1.2; }
-    .detail-hero .detail-meta { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem; opacity: 0.9; }
-    .detail-hero .detail-meta i { margin-right: 6px; color: var(--accent); }
+    .detail-banner-wrap img {
+      width: 100%;
+      height: auto;
+      max-height: 400px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .detail-header-section {
+      background: linear-gradient(135deg, #1a0000 0%, #4a0000 50%, #8b0000 100%);
+      padding: 30px 0;
+      color: var(--white);
+    }
+    .detail-header-section h1 { font-size: 2rem; font-weight: 900; margin-bottom: 8px; line-height: 1.2; }
+    .detail-header-section .detail-meta { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem; opacity: 0.9; }
+    .detail-header-section .detail-meta i { margin-right: 6px; color: var(--accent); }
 
     .detail-section { padding: 40px 0 60px; }
     .detail-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
@@ -308,8 +325,8 @@
       var priceDisplay = (ev.price && parseFloat(ev.price) > 0) ? 'TTD' + ev.price : '<span style="color:green;">Free</span>';
 
       document.getElementById('eventDetailContainer').innerHTML =
-        '<section class="detail-hero" style="background:linear-gradient(135deg,#1a0000,#4a0000,#8b0000);">' +
-          '<div class="detail-hero-bg" style="background-image:url(\'' + banner + '\');"></div>' +
+        (banner ? '<section class="detail-banner-section"><div class="container"><div class="detail-banner-wrap"><img src="' + banner + '" alt="' + (ev.title || 'Event') + '" onerror="this.style.display=\'none\'"></div></div></section>' : '') +
+        '<section class="detail-header-section">' +
           '<div class="container">' +
             '<h1>' + (ev.title || 'Untitled Event') + '</h1>' +
             '<div class="detail-meta">' +
