@@ -326,11 +326,11 @@
           <div class="row">
             <div class="field">
               <label>Start Date <span class="req">*</span></label>
-              <input type="date" id="fStartDate" required>
+              <input type="date" id="fStartDate">
             </div>
             <div class="field">
               <label>Start Time <span class="req">*</span></label>
-              <input type="time" id="fStartTime" required>
+              <input type="time" id="fStartTime">
             </div>
           </div>
 
@@ -344,16 +344,6 @@
               <input type="time" id="fEndTime">
             </div>
           </div>
-        </div>
-
-        <div class="field">
-          <label>Event Recurrence <span class="req">*</span></label>
-          <select id="fRecurrence">
-            <option value="">Don't Repeat</option>
-            <option value="Weekly">Weekly</option>
-            <option value="Monthly">Monthly</option>
-            <option value="Yearly">Yearly</option>
-          </select>
         </div>
 
         <div class="field">
@@ -524,7 +514,6 @@
       document.getElementById('fStartTime').value = ev.start_time || '';
       document.getElementById('fEndDate').value = ev.end_date || '';
       document.getElementById('fEndTime').value = ev.end_time || '';
-      document.getElementById('fRecurrence').value = ev.recurrence || '';
       document.getElementById('fCert').checked = !!ev.enable_certification;
 
       // Set event type
@@ -617,7 +606,6 @@
             start_time: eventType !== 'virtual' ? document.getElementById('fStartTime').value : null,
             end_date: eventType !== 'virtual' ? (document.getElementById('fEndDate').value || null) : null,
             end_time: eventType !== 'virtual' ? (document.getElementById('fEndTime').value || null) : null,
-            recurrence: document.getElementById('fRecurrence').value,
             enable_certification: document.getElementById('fCert').checked
           };
 
