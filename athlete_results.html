@@ -223,7 +223,6 @@
             ? r.attendee_first_name + ' ' + r.attendee_last_name
             : (r.billing_first_name || '') + ' ' + (r.billing_last_name || '');
           var timeDisplay = r.finish_time || '—';
-          var sex = r.attendee_gender || '—';
           var placement = r.placement || null;
           var placementHtml = placement !== null ? placement : '—';
           var eventName = r.events ? r.events.title : 'Unknown Event';
@@ -237,7 +236,6 @@
           rows += '<tr>' +
             '<td>' + fullName + '</td>' +
             '<td>' + timeDisplay + '</td>' +
-            '<td>' + sex + '</td>' +
             '<td><span class="placement-badge ' + badgeClass + '">' + placementHtml + '</span></td>' +
             '<td><a href="' + eventLink + '" class="event-link">' + eventName + '</a><br><span style="font-size:0.78rem;color:#999;">' + eventDate + '</span></td>' +
           '</tr>';
@@ -248,7 +246,7 @@
           '<div class="athlete-results-table-wrap">' +
             '<table class="athlete-results-table">' +
               '<thead><tr>' +
-                '<th>Click Name</th><th>Time</th><th>Sex</th><th>Placement</th><th>Full Results</th>' +
+                '<th>Click Name</th><th>Time</th><th>Placement</th><th>Full Results</th>' +
               '</tr></thead>' +
               '<tbody>' + rows + '</tbody>' +
             '</table>' +
